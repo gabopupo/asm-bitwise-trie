@@ -93,17 +93,16 @@ print_return:
     j main	
 
 insert:		
-		jal create_node
+	jal create_node
     
    	li $v0, 4 
-    la $a0, enter_insertion_str
-    syscall
+   	la $a0, enter_insertion_str
+    	syscall
 
     jal read_str
 
-    j insertion
+    j insert
 
-		j main
 		# TODO
 
 #	struct node_trie {
@@ -135,7 +134,7 @@ remove:
 
     jal read_str
 
-    j removal				
+    j remove
 		# TODO
 
 search: 
