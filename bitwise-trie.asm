@@ -1,41 +1,41 @@
 # =====================================================================================
-#		Trabalho 1 de OrganizaÁ„o de Computadores Digitais I
+#		Trabalho 1 de Organiza√ß√£o de Computadores Digitais I
 #
 #         Filename:  T1.asm 
-#  	  Description:  ImplementaÁ„o de uma ¡rvore de Busca Digital Bin·ria 
+#  	  Description:  Implementa√ß√£o de uma √Årvore de Busca Digital Bin√°ria 
 #
-#         Nome:	Eduardo Zaboto Mirolli			N∫ USP:9778501
-#	  ParticipaÁ„o:	
+#         Nome:	Eduardo Zaboto Mirolli			N¬∫ USP:9778501
+#	  Participa√ß√£o:	
 #
-#         Nome:				 		N∫ USP:	
-#	  ParticipaÁ„o:
+#         Nome:				 		N¬∫ USP:	
+#	  Participa√ß√£o:
 #
-#         Nome:				 		N∫ USP:
-#	  ParticipaÁ„o:
+#         Nome:				 		N¬∫ USP:
+#	  Participa√ß√£o:
 #
-#         Nome:						N∫ USP:
-#	  ParticipaÁ„o:
+#         Nome:						N¬∫ USP:
+#	  Participa√ß√£o:
 #
 # =====================================================================================
 
 	.data
 	.align 0
 
-menu:	.asciiz "1 - InserÁ„o, \n2 - RemoÁ„o, \n3 - Busca, \n4 - VisualizaÁ„o, \n5 - Fim. \nEscolha uma opÁ„o (1 a 5): "	
+menu:	.asciiz "1 - Inser√ß√£o, \n2 - Remo√ß√£o, \n3 - Busca, \n4 - Visualiza√ß√£o, \n5 - Fim. \nEscolha uma op√ß√£o (1 a 5): "	
 binary_number: .space 16 #each character is one ascII letter
 
 
-enter_insertion_str:		.asciiz "\nDigite o bin·rio para inserÁ„o: "
+enter_insertion_str:		.asciiz "\nDigite o bin√°rio para inser√ß√£o: "
 succeeded_insertion_str:	.asciiz "Chave inserida com sucesso. \n"
-repeated_insertion_str:		.asciiz "Chave repetida. InserÁ„o n„o permitida \n"
-invalid_insertion_str:		.asciiz "Chave inv·lida. Insira somente n˙meros bin·rios(ou -1 retorna ao menu) \n"
-enter_removal_str:		.asciiz "Digite o bin·rio para remoÁ„o: "
+repeated_insertion_str:		.asciiz "Chave repetida. Inser√ß√£o n√£o permitida \n"
+invalid_insertion_str:		.asciiz "Chave inv√°lida. Insira somente n√∫meros bin√°rios(ou -1 retorna ao menu) \n"
+enter_removal_str:		.asciiz "Digite o bin√°rio para remo√ß√£o: "
 succeeded_removal_str:		.asciiz "Chave removida com sucesso. \n"
-search_number_str:		.asciiz "Digite o bin·rio para busca: "
+search_number_str:		.asciiz "Digite o bin√°rio para busca: "
 
 
 found_key_str:		.asciiz "Chave encontrada na arvore: "		
-not_found_key_str:	.asciiz "Chave n„o encontrada na arvore: " #quando ocorrer essa string preciso escrever o -1 pra voltar pro menu												
+not_found_key_str:	.asciiz "Chave n√£o encontrada na arvore: " #quando ocorrer essa string preciso escrever o -1 pra voltar pro menu												
 path_str:		.asciiz "Caminho percorrido: "		
 menu_return_str:	.asciiz "Retornando ao menu. \n"
 
@@ -44,7 +44,6 @@ menu_return_str:	.asciiz "Retornando ao menu. \n"
 	.globl main
 
 main:
-	
 	li $v0, 4
 	la $a0, menu
 	syscall
@@ -67,10 +66,7 @@ main:
 	beq $t0, $t4, print_tree
 	beq $t0, $t5, end
 
-	
-
 read_str:
-
 	li $v0, 8
 	la $a0, binary_number # a string digitada fica salva em binary_number
 	li $a1, 16
@@ -80,18 +76,15 @@ read_str:
 	lb $t0, 0($s0)
 	beq $t0, 45, print_return # 45 == ascII para " - " 
 
-
-
-str_verifier_loop: beq $t0, $zero, end_loop
+str_checker_loop:
+	beq $t0, $zero, end_loop
 	bgt $t0, 49, print_err
 	addi $s0, $s0, 1
 	lb $t0, ($s0)
-	j str_verifier_loop
+	j str_checker_loop
 				
 end_loop:			
 	jr $ra
-
-
 
 print_err:
 	li $v0, 4
@@ -105,12 +98,9 @@ print_return:
 	la $a0, menu_return_str
 	syscall
 
-	j main
-
-		
+	j main	
 		
 insertion:
-	
 	li $v0, 4 
 	la $a0, enter_insertion_str
 	syscall
