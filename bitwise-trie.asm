@@ -35,8 +35,9 @@ menu_return_str:		.asciiz "Retornando ao menu. \n"
 
 	.text
 	.globl main
-	
-mainloop:	li $v0, 4		# imprimir menu na tela
+		
+main:
+		li $v0, 4		# imprimir menu na tela
 		la $a0, menu_str
 		syscall
 	
@@ -60,21 +61,43 @@ mainloop:	li $v0, 4		# imprimir menu na tela
 		j main
 			
 #	struct node_trie {
-#		node *child_left;
-#		node *child_right;
+#		node_trie *child_left;
+#		node_trie *child_right;
 #		int terminator
 #	}
 
-insert:		j main
+insert:		
+		jal create_node
+		j main
 		# TODO
 
-remove: 	j main
+create_node:	
+		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
+		sw $ra, 0($sp)
+		
+		li $v0, 9			# alocar 12 (4*3) bytes na memoria
+		li $a0, 12
+		syscall
+		
+		sw $zero, 0($v0)		# node->child_left = NULL;
+		sw $zero, 4($v0)		# node->child_right = NULL;
+		sw $zero, 8($v0)		# node->terminator = FALSE;
+		
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
+		jr $ra		
+
+remove: 
+		j main
 		# TODO
 
-search: 	j main
+search: 
+		j main
 		# TODO
 
-visual: 	j main
+visual:
+	 	j main
 		# TODO
 
-quit:		# TODO	
+quit:
+		# TODO
