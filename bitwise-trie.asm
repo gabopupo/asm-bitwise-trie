@@ -15,10 +15,8 @@
 #
 # =====================================================================================
 
-	
 	.data
 	.align 0
-menu_str:	                .asciiz "===============================\nMENU\n\n1 - Inserir elemento\n2 - Remover elemento\n3 - Buscar elemento\n4 - Visualizar arvore\n5 - Sair do programa\n\n===============================\nOpção: "
 
 enter_insertion_str:		.asciiz "Digite o binario para insercao: "
 succeeded_insertion_str:	.asciiz "Chave inserida com sucesso. \n"
@@ -44,32 +42,75 @@ main:
 		li $v0, 5		# ler opcao escolhida do teclado
 		syscall
 		move $t0, $v0
-	
-		li $t5, 1
-		li $t6, 2
-		li $t7, 3
-		li $t8, 4
-		li $t9, 5
-
+    
+  	li $t1, 1
+  	li $t2, 2
+  	li $t3, 3
+  	li $t4, 4
+  	li $t5, 5
+  
 		# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
-		beq $t0, $t5, insert
-		beq $t0, $t6, remove
-		beq $t0, $t7, search
-		beq $t0, $t8, visual
-		beq $t0, $t9, quit
+	  beq $t0, $t1, insert
+	  beq $t0, $t2, remove
+	  beq $t0, $t3, search
+	  beq $t0, $t4, print_tree
+	  beq $t0, $t5, quit
 
 		j main
 			
+read_str:
+    li $v0, 8
+    la $a0, binary_number # a string digitada fica salva em binary_number
+    li $a1, 16
+    syscall
+
+    move $s0, $a0
+    lb $t0, 0($s0)
+    beq $t0, 45, print_return # 45 == ascII para " - " 
+
+str_checker_loop:
+    beq $t0, $zero, end_loop
+    bgt $t0, 49, print_err
+    addi $s0, $s0, 1
+    lb $t0, ($s0)
+    j str_checker_loop
+
+end_loop:			
+    jr $ra
+
+print_err:
+    li $v0, 4
+    la $a0, invalid_insertion_str
+    syscall
+
+    jr $ra
+
+print_return:
+    li $v0, 4
+    la $a0, menu_return_str
+    syscall
+
+    j main	
+
+insert:		
+		jal create_node
+    
+   	li $v0, 4 
+    la $a0, enter_insertion_str
+    syscall
+
+    jal read_str
+
+    j insertion
+
+		j main
+		# TODO
+
 #	struct node_trie {
 #		node_trie *child_left;
 #		node_trie *child_right;
 #		int terminator
 #	}
-
-insert:		
-		jal create_node
-		j main
-		# TODO
 
 create_node:	
 		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
@@ -88,16 +129,30 @@ create_node:
 		jr $ra		
 
 remove: 
-		j main
+    li $v0, 4 
+    la $a0, enter_removal_str
+    syscall
+
+    jal read_str
+
+    j removal				
 		# TODO
 
 search: 
-		j main
+    li $v0, 4 
+    la $a0, search_number_str
+    syscall
+
+    jal read_str
+
+    j search
 		# TODO
 
-visual:
+print_tree:
 	 	j main
 		# TODO
 
 quit:
+	  li $v0, 10
+	  syscall
 		# TODO
