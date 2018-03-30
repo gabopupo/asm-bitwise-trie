@@ -18,6 +18,9 @@
 	.data
 	.align 0
 
+menu:	.asciiz "1 - Inserção, \n2 - Remoção, \n3 - Busca, \n4 - Visualização, \n5 - Fim. \nEscolha uma opção (1 a 5): "
+binary_number: .space 16 
+                                                                         
 enter_insertion_str:		.asciiz "Digite o binario para insercao: "
 succeeded_insertion_str:	.asciiz "Chave inserida com sucesso. \n"
 repeated_insertion_str:		.asciiz "Chave repetida. Insercao nao permitida \n"
