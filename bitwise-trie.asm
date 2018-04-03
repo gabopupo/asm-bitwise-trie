@@ -39,7 +39,7 @@ menu_return_str:		.asciiz "Retornando ao menu. \n"
 
 main:
 	jal create_node			# criar o node raiz da arvore
-	move $s0, $v0			# salvar a raiz
+	move $s1, $v0			# salvar a raiz
 	
 main_loop:
 	li $v0, 4		# imprimir menu na tela
@@ -82,8 +82,9 @@ str_checker_loop:
     lb $t0, ($s0)
     j str_checker_loop
 
-end_loop:			
-    jr $ra
+end_loop:
+	move $s0, $a0
+	jr $ra
 
 print_err:
     li $v0, 4
@@ -114,6 +115,28 @@ insert:
 
 		# TODO
 
+insert_loop:
+	subi $sp, $sp, 12
+	sw $s1, 8($sp)			# node raiz da arvore
+	sw $s0, 4($sp)			# indice do numero digitado
+	sw $ra, 0($sp)
+
+	beq $s0, $zero, insert_left	# se num[i] == 0, inserir a esquerda da raiz
+	addi $s1, $s1, 4		# acessar node_right
+	seq $t0, $s1, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
+	subi $t0, $t0, 1		# t0 = t0 - 1
+	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
+	addi $s1, $s1, 4		# acessar bool terminator
+	li $s1, $zero			# terminator = FALSE
+	subi $s1, $s1, 4		# acessar node_right
+	move $s1, $v0			# node_right recebe o node criado
+	
+	addi $s1, $s1, 8		# acessar o endereco do proximo node
+	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
+	
+	# TODO
+	
+	
 #	struct node_trie {
 #		node_trie *child_left;
 #		node_trie *child_right;
@@ -128,9 +151,10 @@ create_node:
 		li $a0, 12
 		syscall
 		
+		li $t0, 1
 		sw $zero, 0($v0)		# node->child_left = NULL;
 		sw $zero, 4($v0)		# node->child_right = NULL;
-		sw $zero, 8($v0)		# node->terminator = FALSE;
+		sw $t0, 8($v0)		# node->terminator = TRUE;
 		
 		lw $ra, 0($sp)
 		addi $sp, $sp, 4
