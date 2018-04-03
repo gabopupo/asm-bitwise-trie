@@ -18,7 +18,7 @@
 	.data
 	.align 0
 
-menu:	.asciiz "1 - Inserção, \n2 - Remoção, \n3 - Busca, \n4 - Visualização, \n5 - Fim. \nEscolha uma opção (1 a 5): "
+menu:	.asciiz "1 - Inserir\n2 - Remover\n3 - Buscar\n4 - Visualizar\n5 - Sair\nEscolha uma operacao (1 a 5): "
 binary_number: .space 16 
                                                                          
 enter_insertion_str:		.asciiz "Digite o binario para insercao: "
@@ -36,15 +36,19 @@ menu_return_str:		.asciiz "Retornando ao menu. \n"
 
 	.text
 	.globl main
-		
+
 main:
-		li $v0, 4		# imprimir menu na tela
-		la $a0, menu_str
-		syscall
+	jal create_node			# criar o node raiz da arvore
+	move $s0, $v0			# salvar a raiz
 	
-		li $v0, 5		# ler opcao escolhida do teclado
-		syscall
-		move $t0, $v0
+main_loop:
+	li $v0, 4		# imprimir menu na tela
+	la $a0, menu_str
+	syscall
+	
+	li $v0, 5		# ler opcao escolhida do teclado
+	syscall
+	move $t0, $v0
     
   	li $t1, 1
   	li $t2, 2
@@ -53,13 +57,13 @@ main:
   	li $t5, 5
   
 		# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
-	  beq $t0, $t1, insert
-	  beq $t0, $t2, remove
-	  beq $t0, $t3, search
-	  beq $t0, $t4, print_tree
-	  beq $t0, $t5, quit
+	beq $t0, $t1, insert
+	beq $t0, $t2, remove
+	beq $t0, $t3, search
+	beq $t0, $t4, print_tree
+	beq $t0, $t5, quit
 
-		j main
+	j main_loop
 			
 read_str:
     li $v0, 8
@@ -93,18 +97,20 @@ print_return:
     la $a0, menu_return_str
     syscall
 
-    j main	
+    j main_loop	
 
 insert:		
 	jal create_node
     
    	li $v0, 4 
    	la $a0, enter_insertion_str
-    	syscall
+	syscall
 
-    jal read_str
+	jal read_str
 
-    j insert
+	
+		
+	j insert
 
 		# TODO
 
@@ -151,7 +157,7 @@ search:
 		# TODO
 
 print_tree:
-	 	j main
+	 	j main_loop
 		# TODO
 
 quit:
