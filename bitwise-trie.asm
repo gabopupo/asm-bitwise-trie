@@ -76,10 +76,10 @@ read_str:
     beq $t0, 45, print_return # 45 == ascII para " - " 
 
 str_checker_loop:
-    beq $t0, $zero, end_loop
-    bgt $t0, 49, print_err
-    addi $s0, $s0, 1
-    lb $t0, ($s0)
+    beq $t0, $zero, end_loop  ## verifica $t0 == \0 (fim da string)
+    bgt $t0, 49, print_err    ## se character $to maior que 1, printa erro
+    addi $s0, $s0, 1          ## mudar -> perdemos a referência para o começo da string (e $s0 esta em uso pela raiz)
+    lb $t0, ($s0)             ## $t0 recebe proximo char
     j str_checker_loop
 
 end_loop:			
@@ -90,7 +90,7 @@ print_err:
     la $a0, invalid_insertion_str
     syscall
 
-    jr $ra
+    jr $ra        ## mudar -> apenas retorna para a função, sem informar que deu erro
 
 print_return:
     li $v0, 4
@@ -106,7 +106,7 @@ insert:
    	la $a0, enter_insertion_str
 	syscall
 
-	jal read_str
+	jal read_str    ## lê a string
 
 	
 		
