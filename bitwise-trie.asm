@@ -50,7 +50,7 @@ main_loop:
 	syscall
 	move $t0, $v0
     
-  	li $t1, 1 #shurablwa aisdhadhasd
+  	li $t1, 1
   	li $t2, 2
   	li $t3, 3
   	li $t4, 4
