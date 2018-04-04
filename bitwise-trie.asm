@@ -56,7 +56,7 @@ main_loop:
   	li $t4, 4
   	li $t5, 5
   
-		# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
+	# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
 	beq $t0, $t1, insert
 	beq $t0, $t2, remove
 	beq $t0, $t3, search
@@ -66,49 +66,52 @@ main_loop:
 	j main_loop
 			
 read_str:
-    li $v0, 8
-    la $a0, binary_number # a string digitada fica salva em binary_number
-    li $a1, 16
-    syscall
+	li $v0, 8
+	la $a0, binary_number # a string digitada fica salva em binary_number
+	li $a1, 16
+	syscall
 
-    move $s0, $a0
-    lb $t0, 0($s0)
-    beq $t0, 45, print_return # 45 == ascII para " - " 
+ 	move $s0, $a0
+ 	lb $t0, 0($s0)
+ 	beq $t0, 45, print_return # 45 == ascII para " - " --> Sinaliza que o "-1" foi digitado
 
 str_checker_loop:
-    beq $t0, $zero, end_loop  ## verifica $t0 == \0 (fim da string)
-    bgt $t0, 49, print_err    ## se character $to maior que 1, printa erro
-    addi $s0, $s0, 1          ## mudar -> perdemos a referência para o começo da string (e $s0 esta em uso pela raiz)
-    lb $t0, ($s0)             ## $t0 recebe proximo char
-    j str_checker_loop
+ 	beq $t0, $zero, end_loop  # verifica $t0 == \0 (fim da string)
+ 	bgt $t0, 49, print_err    # se character $to maior que 1, printa erro
+ 	addi $s0, $s0, 1          # mudar -> perdemos a referência para o começo da string (e $s0 esta em uso pela raiz)
+ 	lb $t0, ($s0)             # $t0 recebe proximo char
+  	j str_checker_loop
 
 end_loop:			
-    jr $ra
+ 	jr $ra
 
 print_err:
-    li $v0, 4
-    la $a0, invalid_insertion_str
-    syscall
+	li $v0, 4
+ 	la $a0, invalid_insertion_str
+	syscall
+    
+   	li $s0, -1 	  #carregando um valor negativo em s0 para marcar que a leitura encontrou um erro na entrada dos dados 
 
-    jr $ra        ## mudar -> apenas retorna para a função, sem informar que deu erro
+   	jr $ra        	  # mudar -> apenas retorna para a função, sem informar que deu erro
 
 print_return:
-    li $v0, 4
-    la $a0, menu_return_str
-    syscall
+   	li $v0, 4
+   	la $a0, menu_return_str
+   	syscall
 
-    j main_loop	
+   	j main_loop	
+
+
 
 insert:		
-	jal create_node
     
    	li $v0, 4 
    	la $a0, enter_insertion_str
 	syscall
 
-	jal read_str    ## lê a string
-
-	
+	jal read_str    		# lê a string e verifica se ela foi digitada corretamente
+	bgezal $s0, create_node 	#Se o conteudo de $s0 for maior ou igual a zero , um nó valido pode ser criado
+					#com base no numero inserido
 		
 	j insert
 
@@ -121,44 +124,50 @@ insert:
 #	}
 
 create_node:	
-		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
-		sw $ra, 0($sp)
+	subi $sp, $sp, 4	# armazenar o endereco de retorno na pilha
+	sw $ra, 0($sp)
 		
-		li $v0, 9			# alocar 12 (4*3) bytes na memoria
-		li $a0, 12
-		syscall
+	li $v0, 9		# alocar 12 (4*3) bytes na memoria
+	li $a0, 12
+	syscall
 		
-		sw $zero, 0($v0)		# node->child_left = NULL;
-		sw $zero, 4($v0)		# node->child_right = NULL;
-		sw $zero, 8($v0)		# node->terminator = FALSE;
+	sw $zero, 0($v0)	# node->child_left = NULL;
+	sw $zero, 4($v0)	# node->child_right = NULL;
+	sw $zero, 8($v0)	# node->terminator = FALSE;
 		
-		lw $ra, 0($sp)
-		addi $sp, $sp, 4
-		jr $ra		
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra		
 
 remove: 
-    li $v0, 4 
-    la $a0, enter_removal_str
-    syscall
+   	li $v0, 4 
+   	la $a0, enter_removal_str
+   	syscall
 
-    jal read_str
-
-    j remove
+   	jal read_str
+	
 		# TODO
+		
+   	j remove
+	
 
 search: 
-    li $v0, 4 
-    la $a0, search_number_str
-    syscall
+   	li $v0, 4 
+   	la $a0, search_number_str
+   	syscall
 
-    jal read_str
+   	jal read_str
 
-    j search
-		# TODO
+		# TODO	
+	
+   	j search
+
 
 print_tree:
-	 	j main_loop
+	j main_loop
+	
 		# TODO
+
 
 quit:
 	  li $v0, 10
