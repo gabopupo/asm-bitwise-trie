@@ -122,14 +122,14 @@ insert_loop:
 	sw $ra, 0($sp)
 
 	beq $s0, $zero, insert_left	# se num[i] == 0, inserir a esquerda da raiz
-	addi $s1, $s1, 4		# acessar node_right
-	seq $t0, $s1, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
+	lw $t2, 4($s1)			# carregue o conteudo de node_right
+	seq $t0, $t2, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
 	subi $t0, $t0, 1		# t0 = t0 - 1
 	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
-	addi $s1, $s1, 4		# acessar bool terminator
-	li $s1, $zero			# terminator = FALSE
-	subi $s1, $s1, 4		# acessar node_right
-	move $s1, $v0			# node_right recebe o node criado
+	lw $t1, 8($s1)			# carregue o conteudo de terminator
+	add $t1, $zero, $zero		# terminator = FALSE
+	sw $t1, 8($s1)			# salve terminator
+	sw $v0, 4($s1)			# node_right recebe o node criado ($v0 contem o retorno de create_node)
 	
 	addi $s1, $s1, 8		# acessar o endereco do proximo node
 	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
