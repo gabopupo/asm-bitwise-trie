@@ -108,31 +108,32 @@ insert:
 	syscall
 
 	jal read_str
-
 	
-		
-	j insert
+	move $a0, $s1			# guarde temporariamente a raiz da arvore
 
-		# TODO
-
-insert_loop:
-	subi $sp, $sp, 12
-	sw $s1, 8($sp)			# node raiz da arvore
-	sw $s0, 4($sp)			# indice do numero digitado
-	sw $ra, 0($sp)
-
+insert_loop:	# TODO condição de parada!
 	beq $s0, $zero, insert_left	# se num[i] == 0, inserir a esquerda da raiz
 	lw $t2, 4($s1)			# carregue o conteudo de node_right
 	seq $t0, $t2, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
 	subi $t0, $t0, 1		# t0 = t0 - 1
 	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
-	lw $t1, 8($s1)			# carregue o conteudo de terminator
-	add $t1, $zero, $zero		# terminator = FALSE
-	sw $t1, 8($s1)			# salve terminator
+	sw $zero, 8($s1)		# acesse bool terminator, e defina seu valor como FALSE
 	sw $v0, 4($s1)			# node_right recebe o node criado ($v0 contem o retorno de create_node)
 	
-	addi $s1, $s1, 8		# acessar o endereco do proximo node
+	addi $s1, $s1, 12		# acessar o endereco do proximo node
 	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
+
+insert_left:
+	lw $t2, 0($s1)			# carregue o conteudo de node_left
+	seq $t0, $t2, $zero		# se node_left == NULL, t0 = 1, do contrario, t0 = 0
+	subi $t0, $t0, 1		# t0 = t0 - 1
+	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
+	sw $zero, 8($s1)		# acesse bool terminator, e defina seu valor como FALSE
+	sw $v0, 0($s1)			# node_left recebe o node criado ($v0 contem o retorno de create_node)
+	
+	addi $s1, $s1, 12		# acessar o endereco do proximo node
+	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
+	j insert_loop			# volte ao loop de insercao
 	
 	# TODO
 	
