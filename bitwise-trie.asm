@@ -34,7 +34,7 @@ not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "
 path_str:			.asciiz "Caminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
 
-success: .asciiz "Entrei na função \n"
+success: .asciiz "Entrei na funï¿½ï¿½o \n"
 
 	.text
 	.globl main
@@ -58,7 +58,7 @@ main_loop:
   	li $t4, 4
   	li $t5, 5
   
-		# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
+	# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
 	beq $t0, $t1, insert
 	beq $t0, $t2, remove
 	beq $t0, $t3, search
@@ -68,25 +68,26 @@ main_loop:
 	j main_loop
 			
 read_str:
-    li $v0, 8
-    la $a0, binary_number # a string digitada fica salva em binary_number
-    li $a1, 16
-    syscall
+	li $v0, 8
+	la $a0, binary_number # a string digitada fica salva em binary_number
+	li $a1, 16
+	syscall
 
-    move $t1, $a0 # guardando o numero binario em um registrador para usá-lo durante esse processo
+
+    move $t1, $a0 # guardando o numero binario em um registrador para usï¿½-lo durante esse processo
     
     lb $t0, 0($t1)
     beq $t0, 45, print_return # 45 == ascII para " - " ---> if(string[i] == '-') 
 
 str_checker_loop:    
    
-    beq $t0, 10 , TenToZero	#TenToZero é a conversão do 10 == ENTER para um \0 
+    beq $t0, 10 , TenToZero	#TenToZero ï¿½ a conversï¿½o do 10 == ENTER para um \0 
     beq $t0, $zero, end_loop	# if( string[i] == '\0' )  
     bgt $t0, 49, print_err	# if( string[i] > 49 ) --> se o caractere for maior do que o 1 em ASCII, imprima uma mensagem de erro 
     blt $t0, 48, print_err	# if( string[i] < 48 )
     
     
-    addi $t1, $t1, 1		# some 1 ao endereço base da string para ter acesso ao seu proximo caractere
+    addi $t1, $t1, 1		# some 1 ao endereï¿½o base da string para ter acesso ao seu proximo caractere
     lb $t0, ($t1)		# carregue o proximo byte da string no byte mais a direita do registrador $t0
     j str_checker_loop
 
@@ -97,7 +98,7 @@ TenToZero:
 	sb $t0, ($t1)
 	
 end_loop:
-	move $s0, $a0 # no caso de o numero digitado ser válido, ele será salvo em um registrador s0
+	move $s0, $a0 # no caso de o numero digitado ser vï¿½lido, ele serï¿½ salvo em um registrador s0
 			#problema: o a0 armazenado 
 	jr $ra
 
@@ -113,12 +114,15 @@ print_err:
     
     
 
-print_return:
-    li $v0, 4
-    la $a0, menu_return_str
-    syscall
 
-    j main_loop	
+print_return:
+   	li $v0, 4
+   	la $a0, menu_return_str
+   	syscall
+
+   	j main_loop	
+
+
 
 
 create_node:	
@@ -145,15 +149,17 @@ create_node:
 
 
 insert:		
-	
+
    	li $v0, 4 
    	la $a0, enter_insertion_str
 	syscall
 
+
 	jal read_str
-	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
+	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um nï¿½ valido
 		
 	
+
 		
 	j insert
 
@@ -163,7 +169,7 @@ insert_loop:
 	
 	lb $t3, ($s0)
 	
-	beq $t3, $zero, end_insert_loop # condição de parada!
+	beq $t3, $zero, end_insert_loop # condiï¿½ï¿½o de parada!
 	
 	
 	li $t3 , 48			# 48 == 0 em ascII
@@ -187,6 +193,7 @@ insert_loop:
 #		int terminator
 #	}
 
+
 insert_left:
 	lw $t2, 0($s1)			# carregue o conteudo de node_left
 	seq $t0, $t2, $zero		# se node_left == NULL, t0 = 1, do contrario, t0 = 0
@@ -200,38 +207,41 @@ insert_left:
 	
 end_insert_loop:
 	li $t4, 1 			# O 1 representa um true booleano
-	sw $t4, 8($s1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
+	sw $t4, 8($s1) 			# O true serï¿½ atribuï¿½do ao terminador no ultimo nï¿½ que serï¿½ inserido
 	j insert
 
-
-
-
-
+	
 
 
 remove: 
-    li $v0, 4 
-    la $a0, enter_removal_str
-    syscall
+   	li $v0, 4 
+   	la $a0, enter_removal_str
+   	syscall
 
-    jal read_str
-
-    j remove
+   	jal read_str
+	
 		# TODO
+		
+   	j remove
+	
 
 search: 
-    li $v0, 4 
-    la $a0, search_number_str
-    syscall
+   	li $v0, 4 
+   	la $a0, search_number_str
+   	syscall
 
-    jal read_str
+   	jal read_str
 
-    j search
-		# TODO
+		# TODO	
+	
+   	j search
+
 
 print_tree:
-	 	j main_loop
+	j main_loop
+	
 		# TODO
+
 
 quit:
 	  li $v0, 10
