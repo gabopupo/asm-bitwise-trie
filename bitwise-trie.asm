@@ -71,34 +71,48 @@ read_str:
     li $a1, 16
     syscall
 
-    move $s0, $a0
-    lb $t0, 0($s0)
-    beq $t0, 45, print_return # 45 == ascII para " - " 
+    move $t1, $a0 # guardando o numero binario em um registrador para usá-lo durante esse processo
+    
+    lb $t0, 0($t1)
+    beq $t0, 45, print_return # 45 == ascII para " - " ---> if(string[i] == '-') 
 
 str_checker_loop:
-    beq $t0, $zero, end_loop
-    bgt $t0, 49, print_err
-    addi $s0, $s0, 1
-    lb $t0, ($s0)
+   
+    beq $t0, 10 , TenToZero	#TenToZero é a conversão do 10 == ENTER para um \0 
+    beq $t0, $zero, end_loop	# if( string[i] == '\0' )  
+    bgt $t0, 49, print_err	# if( string[i] > 49 ) --> se o caractere for maior do que o 1 em ASCII, imprima uma mensagem de erro 
+    blt $t0, 48, print_err	# if( string[i] < 48 )
+    
+    addi $t1, $t1, 1		# some 1 ao endereço base da string para ter acesso ao seu proximo caractere
+    lb $t0, ($t1)		# carregue o proximo byte da string no byte mais a direita do registrador $t0
     j str_checker_loop
 
+TenToZero:
+	li $t0, 0
+	
+	
 end_loop:
-	move $s0, $a0
+	move $s0, $a0 # no caso de o numero digitado ser válido, ele será salvo em um registrador s0
 	jr $ra
+
 
 print_err:
     li $v0, 4
     la $a0, invalid_insertion_str
     syscall
-
+    
+    li $s0, -1 	#carregando um valor negativo em s0 para marcar que a leitura da entrada encontrou um erro
+	
     jr $ra
+    
+    
 
 print_return:
     li $v0, 4
     la $a0, menu_return_str
     syscall
 
-    j main_loop	
+    j main_loop
 
 insert:		
 	jal create_node
