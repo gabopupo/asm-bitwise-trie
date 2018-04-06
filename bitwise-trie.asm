@@ -34,8 +34,6 @@ not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "
 path_str:			.asciiz "Caminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
 
-success: .asciiz "Entrei na funï¿½ï¿½o \n"
-
 	.text
 	.globl main
 
@@ -111,24 +109,13 @@ print_err:
     	li $s0, -1 	#carregando um valor negativo em s0 para marcar que a leitura da entrada encontrou um erro
 	
     	jr $ra
-    
-    
-
-
 print_return:
    	li $v0, 4
    	la $a0, menu_return_str
    	syscall
 
    	j main_loop	
-
-
-
-
 create_node:	
-		
-		
-		
 		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
 		sw $ra, 0($sp)
 		
@@ -145,9 +132,6 @@ create_node:
 		addi $sp, $sp, 4
 	
 		jr $ra		
-
-
-
 insert:		
 
    	li $v0, 4 
@@ -157,9 +141,6 @@ insert:
 
 	jal read_str
 	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um nï¿½ valido
-		
-	
-
 		
 	j insert
 
@@ -173,7 +154,8 @@ insert_loop:
 	
 	
 	li $t3 , 48			# 48 == 0 em ascII
-	beq $s0, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
+	lb $t4, ($s0)			# carregue num[i] (indice atual do numero binario)
+	beq $t4, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
 	lw $t2, 4($s1)			# carregue o conteudo de node_right
 	seq $t0, $t2, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
 	subi $t0, $t0, 1		# t0 = t0 - 1
@@ -210,32 +192,28 @@ end_insert_loop:
 	sw $t4, 8($s1) 			# O true serï¿½ atribuï¿½do ao terminador no ultimo nï¿½ que serï¿½ inserido
 	j insert
 
-	
-
-
-remove: 
+	remove: 
    	li $v0, 4 
    	la $a0, enter_removal_str
    	syscall
 
    	jal read_str
-	
 		# TODO
 		
    	j remove
 	
-
 search: 
    	li $v0, 4 
    	la $a0, search_number_str
    	syscall
 
    	jal read_str
-
+   	bgezal $s0, search_loop
 		# TODO	
-	
    	j search
 
+search_loop:
+	# condição de parada
 
 print_tree:
 	j main_loop
