@@ -34,16 +34,18 @@ not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "
 path_str:			.asciiz "Caminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
 
+success: .asciiz "Entrei na fun��o \n"
+
 	.text
 	.globl main
 
 main:
 	jal create_node			# criar o node raiz da arvore
-	move $s0, $v0			# salvar a raiz
+	move $s1, $v0			# salvar a raiz
 	
 main_loop:
 	li $v0, 4		# imprimir menu na tela
-	la $a0, menu_str
+	la $a0, menu
 	syscall
 	
 	li $v0, 5		# ler opcao escolhida do teclado
@@ -71,28 +73,47 @@ read_str:
 	li $a1, 16
 	syscall
 
- 	move $s0, $a0
- 	lb $t0, 0($s0)
- 	beq $t0, 45, print_return # 45 == ascII para " - " --> Sinaliza que o "-1" foi digitado
 
-str_checker_loop:
- 	beq $t0, $zero, end_loop  # verifica $t0 == \0 (fim da string)
- 	bgt $t0, 49, print_err    # se character $to maior que 1, printa erro
- 	addi $s0, $s0, 1          # mudar -> perdemos a referência para o começo da string (e $s0 esta em uso pela raiz)
- 	lb $t0, ($s0)             # $t0 recebe proximo char
-  	j str_checker_loop
+    move $t1, $a0 # guardando o numero binario em um registrador para us�-lo durante esse processo
+    
+    lb $t0, 0($t1)
+    beq $t0, 45, print_return # 45 == ascII para " - " ---> if(string[i] == '-') 
 
-end_loop:			
- 	jr $ra
+str_checker_loop:    
+   
+    beq $t0, 10 , TenToZero	#TenToZero � a convers�o do 10 == ENTER para um \0 
+    beq $t0, $zero, end_loop	# if( string[i] == '\0' )  
+    bgt $t0, 49, print_err	# if( string[i] > 49 ) --> se o caractere for maior do que o 1 em ASCII, imprima uma mensagem de erro 
+    blt $t0, 48, print_err	# if( string[i] < 48 )
+    
+    
+    addi $t1, $t1, 1		# some 1 ao endere�o base da string para ter acesso ao seu proximo caractere
+    lb $t0, ($t1)		# carregue o proximo byte da string no byte mais a direita do registrador $t0
+    j str_checker_loop
+
+
+TenToZero:
+	
+	li $t0, 0
+	sb $t0, ($t1)
+	
+end_loop:
+	move $s0, $a0 # no caso de o numero digitado ser v�lido, ele ser� salvo em um registrador s0
+			#problema: o a0 armazenado 
+	jr $ra
+
 
 print_err:
-	li $v0, 4
- 	la $a0, invalid_insertion_str
-	syscall
+   	li $v0, 4	
+   	la $a0, invalid_insertion_str
+  	syscall
     
-   	li $s0, -1 	  #carregando um valor negativo em s0 para marcar que a leitura encontrou um erro na entrada dos dados 
+    	li $s0, -1 	#carregando um valor negativo em s0 para marcar que a leitura da entrada encontrou um erro
+	
+    	jr $ra
+    
+    
 
-   	jr $ra        	  # mudar -> apenas retorna para a função, sem informar que deu erro
 
 print_return:
    	li $v0, 4
@@ -103,41 +124,94 @@ print_return:
 
 
 
+
+create_node:	
+		
+		
+		
+		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
+		sw $ra, 0($sp)
+		
+		li $v0, 9			# alocar 12 (4*3) bytes na memoria
+		li $a0, 12
+		syscall
+		
+		li $t0, 1
+		sw $zero, 0($v0)		# node->child_left = NULL;
+		sw $zero, 4($v0)		# node->child_right = NULL;
+		sw $t0, 8($v0)			# node->terminator = TRUE;
+		
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
+	
+		jr $ra		
+
+
+
 insert:		
-    
+
    	li $v0, 4 
    	la $a0, enter_insertion_str
 	syscall
 
-	jal read_str    		# lê a string e verifica se ela foi digitada corretamente
-	bgezal $s0, create_node 	#Se o conteudo de $s0 for maior ou igual a zero , um nó valido pode ser criado
-					#com base no numero inserido
+
+	jal read_str
+	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um n� valido
+		
+	
+
 		
 	j insert
 
 		# TODO
 
+insert_loop:	
+	
+	lb $t3, ($s0)
+	
+	beq $t3, $zero, end_insert_loop # condi��o de parada!
+	
+	
+	li $t3 , 48			# 48 == 0 em ascII
+	beq $s0, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
+	lw $t2, 4($s1)			# carregue o conteudo de node_right
+	seq $t0, $t2, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
+	subi $t0, $t0, 1		# t0 = t0 - 1
+	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
+	sw $zero, 8($s1)		# acesse bool terminator, e defina seu valor como FALSE
+	sw $v0, 4($s1)			# node_right recebe o node criado ($v0 contem o retorno de create_node)
+	
+	addi $s1, $s1, 12		# acessar o endereco do proximo node
+	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
+
+	j insert_loop
+
+	
 #	struct node_trie {
 #		node_trie *child_left;
 #		node_trie *child_right;
 #		int terminator
 #	}
 
-create_node:	
-	subi $sp, $sp, 4	# armazenar o endereco de retorno na pilha
-	sw $ra, 0($sp)
-		
-	li $v0, 9		# alocar 12 (4*3) bytes na memoria
-	li $a0, 12
-	syscall
-		
-	sw $zero, 0($v0)	# node->child_left = NULL;
-	sw $zero, 4($v0)	# node->child_right = NULL;
-	sw $zero, 8($v0)	# node->terminator = FALSE;
-		
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	jr $ra		
+
+insert_left:
+	lw $t2, 0($s1)			# carregue o conteudo de node_left
+	seq $t0, $t2, $zero		# se node_left == NULL, t0 = 1, do contrario, t0 = 0
+	subi $t0, $t0, 1		# t0 = t0 - 1
+	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
+	
+	sw $v0, 0($s1)			# node_left recebe o node criado ($v0 contem o retorno de create_node)
+	addi $s1, $s1, 12		# acessar o endereco do proximo node
+	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
+	j insert_loop			# volte ao loop de insercao
+	
+end_insert_loop:
+	li $t4, 1 			# O 1 representa um true booleano
+	sw $t4, 8($s1) 			# O true ser� atribu�do ao terminador no ultimo n� que ser� inserido
+	j insert
+
+	
+
 
 remove: 
    	li $v0, 4 
