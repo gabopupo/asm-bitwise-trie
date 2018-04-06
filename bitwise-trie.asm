@@ -178,7 +178,7 @@ insert_loop:
 	seq $t0, $t2, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
 	subi $t0, $t0, 1		# t0 = t0 - 1
 	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
-	sw $zero, 8($s1)		# acesse bool terminator, e defina seu valor como FALSE
+	
 	sw $v0, 4($s1)			# node_right recebe o node criado ($v0 contem o retorno de create_node)
 	
 	addi $s1, $s1, 12		# acessar o endereco do proximo node
