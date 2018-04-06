@@ -115,8 +115,6 @@ print_return:
     j main_loop
 
 insert:		
-	jal create_node
-    
    	li $v0, 4 
    	la $a0, enter_insertion_str
 	syscall
