@@ -111,8 +111,11 @@ insert:
 	
 	move $a0, $s1			# guarde temporariamente a raiz da arvore
 
-insert_loop:	# TODO condição de parada!
-	beq $s0, $zero, insert_left	# se num[i] == 0, inserir a esquerda da raiz
+insert_loop:	
+	beq $s0, $zero, end_insert_loop # condiÃ§Ã£o de parada!
+	
+	li $t3 , 48			# 48 == 0 em ascII
+	beq $s0, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
 	lw $t2, 4($s1)			# carregue o conteudo de node_right
 	seq $t0, $t2, $zero		# se node_right == NULL, t0 = 1, do contrario, t0 = 0
 	subi $t0, $t0, 1		# t0 = t0 - 1
@@ -123,20 +126,26 @@ insert_loop:	# TODO condição de parada!
 	addi $s1, $s1, 12		# acessar o endereco do proximo node
 	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
 
+	j insert_loop
+
 insert_left:
 	lw $t2, 0($s1)			# carregue o conteudo de node_left
 	seq $t0, $t2, $zero		# se node_left == NULL, t0 = 1, do contrario, t0 = 0
 	subi $t0, $t0, 1		# t0 = t0 - 1
 	bgezal $t0, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
-	sw $zero, 8($s1)		# acesse bool terminator, e defina seu valor como FALSE
-	sw $v0, 0($s1)			# node_left recebe o node criado ($v0 contem o retorno de create_node)
 	
+	sw $v0, 0($s1)			# node_left recebe o node criado ($v0 contem o retorno de create_node)
 	addi $s1, $s1, 12		# acessar o endereco do proximo node
 	addi $s0, $s0, 1		# acessar o proximo indice do numero (isto eh, i++)
 	j insert_loop			# volte ao loop de insercao
 	
 	# TODO
-	
+
+end_insert_loop:
+	li $t4, 1 			# O 1 representa um true booleano
+	sw $t4, 8($s1) 			# O true serÃ¡ atribuÃ­do ao terminador no ultimo nÃ³ que serÃ¡ inserido
+	j insert
+
 	
 #	struct node_trie {
 #		node_trie *child_left;
