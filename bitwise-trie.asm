@@ -40,7 +40,7 @@ menu_return_str:		.asciiz "Retornando ao menu. \n"
 
 esq_str:			.asciiz "esq, "
 dir_str:			.asciiz "dir, "
-raiz_str			.asciiz "raiz, "
+raiz_str:			.asciiz "raiz, "
 
 
 endl_str:			.asciiz "\n"
@@ -238,7 +238,7 @@ search:
    	jal read_str
    	move $t0, $s0	
 	move $t1, $s1
-   	move $t9, $s2
+   	move $t9, $s2	
    	
    	bgezal $s0, search_loop
 		# TODO	
@@ -281,6 +281,7 @@ search_left:
 end_search_loop:
 	
 	move $s2, $t9				# salvando a string do caminho percorrido em s2
+	li $t8, 50				# flag para indicar que a busca terminou 50 == 2 em ascII
 	
 	li $v0, 4				# print "Chave encontrada"
 	la $a0, found_key_str
@@ -290,7 +291,7 @@ end_search_loop:
 	move $a0, $s0
 	syscall
 	
-	jal path_print_loop 			# TODO: Caminho percorrido
+	jal path_print			# TODO: Caminho percorrido
 	j main_loop
 	
 	
@@ -306,22 +307,26 @@ not_found:
 	li $a0, -1
 	syscall
 	
-	jal path_print_loop 			# TODO: caminho percorrido
+	jal path_print 			# TODO: caminho percorrido
 
 	j main_loop
 
 
-path_print_loop:
-	
+path_print:
 	li $v0, 4
 	la $a0, raiz_str
 	syscall
+
+
+path_print_loop:
 	
-	lb $t0, ($)
+	move $t9, $s2
+		
+	lb $t0, ($t9)
 
 	beq $t0, 48, print_esq_str	
 	beq $t0, 49, print_dir_str		
-	bgt $t0, 49 ,end_path_loop 	#mudar isso!
+	beq $t0, $t8 ,end_path_loop 	
 	
 			
 print_esq_str:
@@ -329,17 +334,24 @@ print_esq_str:
 	la $a0, esq_str
 	syscall
 	
+	addi $t9, $t9, 1
+	
 	j path_print_loop
 
 print_dir_str:
 	li $v0, 4
 	la $a0, dir_str
 	syscall
-
+	
+	addi $t9, $t9, 1
+	
 	j path_print_loop
 
 end_path_loop:
 	jr $ra		#retornando ao processo que chamou print_path_loop
+
+
+
 
 
 
