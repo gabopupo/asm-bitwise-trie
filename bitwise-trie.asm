@@ -247,20 +247,23 @@ search:
 
 
 search_loop:
-	lb $t3, ($t0)
-	beq $t3, $zero, end_search_loop # condicao de parada
+	
+	#beq $t0, $zero, terminator_check
+	#lb $t3, ($t0)
 	
 	li $t3, 48			# 48 == 0 em ascII
 	lb $t4, ($t0)			# carregue num[i]
 	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
+	beq $t4, $zero, terminator_check # condicao de parada
 	
-	sb $t4, ($s0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
-	addi $s0, $s0, 1
+	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	#addi $s0, $s0, 1
 	
 	
-	lw $t2, 4($t1)			# carregue o conteudo de node_right
+	la $t2, 4($t1)			# carregue o conteudo de node_right
 	beq $t2, $zero, not_found	# se node_right == NULL, o numero nao esta na arvore
 	
+		
 	addi $t0, $t0, 1		# i++
 	la $t1, 4($t1)			# navegue para o endereco do node filho
 	
@@ -268,8 +271,11 @@ search_loop:
 	
 	
 search_left:
-	sb $t4, ($s0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
-	addi $s0, $s0, 1
+
+	#beq $t0, $zero, terminator_check
+	
+	sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	#addi $s0, $s0, 1
 	
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
@@ -282,11 +288,10 @@ search_left:
 end_search_loop:
 	
 	#subi $t9, $t9, 5
-	
 	#move $s2, $t9				# salvando a string do caminho percorrido em s2
-	li $t8, 50				# flag para indicar que a busca terminou 50 == 2 em ascII
+	#li $t8, 50				# flag para indicar que a busca terminou 50 == 2 em ascII
 	
-	sb $t8, ($s0)
+	#sb $t8, ($s0)
 	
 	li $v0, 4				# print "Chave encontrada"
 	la $a0, found_key_str
@@ -296,14 +301,14 @@ end_search_loop:
 	move $a0, $s0
 	syscall
 	
-	jal path_print			# TODO: Caminho percorrido
+	#jal path_print			# TODO: Caminho percorrido
 	j main_loop
 	
 	
 not_found:
 	
 	
-	move $s2, $t9				# salvando a string do caminho percorrido em s2
+	#move $s2, $t9				# salvando a string do caminho percorrido em s2
 	
 	li $v0, 4				# print "Chave nao encontrada"
 	la $a0, not_found_key_str
@@ -313,9 +318,18 @@ not_found:
 	li $a0, -1
 	syscall
 	
-	jal path_print 			# TODO: caminho percorrido
+	#jal path_print 			# TODO: caminho percorrido
 
 	j main_loop
+
+
+terminator_check:
+
+	lw $t5, 8($t1)
+	beq $t5, $zero, not_found
+	bgt $t5, $zero, end_search_loop
+
+
 
 
 path_print:
@@ -328,7 +342,7 @@ path_print:
 	syscall
 
 	li $v0, 4
-	la $a0, ($t9)
+	la $a0, ($s0)
 	syscall
 	
 	
