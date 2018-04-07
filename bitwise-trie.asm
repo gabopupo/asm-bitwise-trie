@@ -216,36 +216,36 @@ search:
    	syscall
 
    	jal read_str
-   	move $t7, $s0
+   	move $t0, $s0	
+	move $t1, $s1
+   	
    	bgezal $s0, search_loop
 		# TODO	
    	j search
 
 
 search_loop:
-	lb $t3, ($s0)
+	lb $t3, ($t0)
 	beq $t3, $zero, end_search_loop # condicao de parada
 	
-	#move $s2, $s1
-	
 	li $t3, 48			# 48 == 0 em ascII
-	lb $t4, ($s0)			# carregue num[i]
+	lb $t4, ($t0)			# carregue num[i]
 	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
 	
-	lw $t2, 4($s1)			# carregue o conteudo de node_right
+	lw $t2, 4($t1)			# carregue o conteudo de node_right
 	beq $t2, $zero, not_found	# se node_right == NULL, o numero nao esta na arvore
 	
-	addi $s0, $s0, 1		# i++
-	la $s1, 4($s1)			# navegue para o endereco do node filho
+	addi $t0, $t0, 1		# i++
+	la $t1, 4($t1)			# navegue para o endereco do node filho
 	
 	j search_loop
 	
 search_left:
-	lw $t2, 0($s1)
+	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
 	
-	addi $s0, $s0, 1
-	la $s1, 0($s1)
+	addi $t0, $t0, 1
+	la $t1, 0($t1)
 	j search_loop
 	
 	
