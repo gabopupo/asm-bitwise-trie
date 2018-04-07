@@ -18,8 +18,10 @@
 	.data
 	.align 0
 
-menu:	.asciiz "1 - Inserir\n2 - Remover\n3 - Buscar\n4 - Visualizar\n5 - Sair\nEscolha uma operacao (1 a 5): "
-binary_number: .space 16 
+menu:		.asciiz "1 - Inserir\n2 - Remover\n3 - Buscar\n4 - Visualizar\n5 - Sair\nEscolha uma operacao (1 a 5): "
+binary_number: 	.space 16 
+
+
                                                                          
 enter_insertion_str:		.asciiz "Digite o binario para insercao: "
 succeeded_insertion_str:	.asciiz "Chave inserida com sucesso. \n"
@@ -29,12 +31,22 @@ enter_removal_str:		.asciiz "Digite o binario para remocao: "
 succeeded_removal_str:		.asciiz "Chave removida com sucesso. \n"
 search_number_str:		.asciiz "Digite o binario para busca: "
 
+
 found_key_str:			.asciiz "Chave encontrada na arvore: "		
 not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "												
 path_str:			.asciiz "Caminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
 
+
+esq_str:			.asciiz "esq, "
+dir_str:			.asciiz "dir, "
+raiz_str			.asciiz "raiz, "
+
+
 endl_str:			.asciiz "\n"
+
+
+
 
 success: .asciiz "Entrei na função \n"
 
@@ -45,6 +57,12 @@ main:
 	jal create_node			# criar o node raiz da arvore
 	move $s1, $v0			# salvar a raiz
 	
+	li $v0, 9			# alocar 16 (4*4) bytes na memoria
+	li $a0, 16
+	syscall
+
+	move $s2, $v0			# s2 guarda o vetor que representa o caminho percorrido
+			
 main_loop:
 	li $v0, 4		# imprimir menu na tela
 	la $a0, menu
@@ -126,7 +144,6 @@ print_return:
 create_node:	
 		
 		
-		
 		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
 		sw $ra, 0($sp)
 		
@@ -157,9 +174,11 @@ insert:
 	move $t0, $s0	
 	move $t1, $s1
 	
+		
 	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
 	
 	j insert
+
 
 insert_loop:	
 
@@ -170,6 +189,7 @@ insert_loop:
 	
 	li $t3 , 48			# 48 == 0 em ascII
 	beq $t0, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
+
 	lw $t2, 4($t1)			# carregue o conteudo de node_right
 	seq $t4, $t0, $zero		# se node_right == NULL, t4 = 1, do contrario, t4 = 0
 	subi $t4, $t4, 1		# t0 = t0 - 1
@@ -218,6 +238,7 @@ search:
    	jal read_str
    	move $t0, $s0	
 	move $t1, $s1
+   	move $t9, $s2
    	
    	bgezal $s0, search_loop
 		# TODO	
@@ -232,6 +253,10 @@ search_loop:
 	lb $t4, ($t0)			# carregue num[i]
 	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
 	
+	sb $t4, ($t9)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	addi $t9, $t9, 1
+	
+	
 	lw $t2, 4($t1)			# carregue o conteudo de node_right
 	beq $t2, $zero, not_found	# se node_right == NULL, o numero nao esta na arvore
 	
@@ -240,7 +265,11 @@ search_loop:
 	
 	j search_loop
 	
+	
 search_left:
+	sb $t4, ($t9)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	addi $t9, $t9, 1
+	
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
 	
@@ -250,18 +279,25 @@ search_left:
 	
 	
 end_search_loop:
+	
+	move $s2, $t9				# salvando a string do caminho percorrido em s2
+	
 	li $v0, 4				# print "Chave encontrada"
 	la $a0, found_key_str
 	syscall
 	
 	li $v0, 4				# print numero
-	move $a0, $t7
+	move $a0, $s0
 	syscall
 	
-	# TODO: caminho percorrido
+	jal path_print_loop 			# TODO: Caminho percorrido
 	j main_loop
 	
+	
 not_found:
+	
+	move $s2, $t9				# salvando a string do caminho percorrido em s2
+	
 	li $v0, 4				# print "Chave nao encontrada"
 	la $a0, not_found_key_str
 	syscall
@@ -270,12 +306,40 @@ not_found:
 	li $a0, -1
 	syscall
 	
-	# TODO: caminho percorrido
+	jal path_print_loop 			# TODO: caminho percorrido
+
 	j main_loop
 
 
+path_print_loop:
+	
+	li $v0, 4
+	la $a0, raiz_str
+	syscall
+	
+	lb $t0, ($)
 
+	beq $t0, 48, print_esq_str	
+	beq $t0, 49, print_dir_str		
+	bgt $t0, 49 ,end_path_loop 	#mudar isso!
+	
+			
+print_esq_str:
+	li $v0, 4
+	la $a0, esq_str
+	syscall
+	
+	j path_print_loop
 
+print_dir_str:
+	li $v0, 4
+	la $a0, dir_str
+	syscall
+
+	j path_print_loop
+
+end_path_loop:
+	jr $ra		#retornando ao processo que chamou print_path_loop
 
 
 
