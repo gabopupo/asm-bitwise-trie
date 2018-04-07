@@ -34,7 +34,7 @@ search_number_str:		.asciiz "Digite o binario para busca: "
 
 found_key_str:			.asciiz "Chave encontrada na arvore: "		
 not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "												
-path_str:			.asciiz "Caminho percorrido: "		
+path_str:			.asciiz "\nCaminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
 
 
@@ -238,7 +238,8 @@ search:
    	jal read_str
    	move $t0, $s0	
 	move $t1, $s1
-   	move $t9, $s2	
+   	#move $t9, $s2	
+   	
    	
    	bgezal $s0, search_loop
 		# TODO	
@@ -253,8 +254,8 @@ search_loop:
 	lb $t4, ($t0)			# carregue num[i]
 	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
 	
-	sb $t4, ($t9)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
-	addi $t9, $t9, 1
+	sb $t4, ($s0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	addi $s0, $s0, 1
 	
 	
 	lw $t2, 4($t1)			# carregue o conteudo de node_right
@@ -267,8 +268,8 @@ search_loop:
 	
 	
 search_left:
-	sb $t4, ($t9)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
-	addi $t9, $t9, 1
+	sb $t4, ($s0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	addi $s0, $s0, 1
 	
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
@@ -280,8 +281,12 @@ search_left:
 	
 end_search_loop:
 	
-	move $s2, $t9				# salvando a string do caminho percorrido em s2
+	#subi $t9, $t9, 5
+	
+	#move $s2, $t9				# salvando a string do caminho percorrido em s2
 	li $t8, 50				# flag para indicar que a busca terminou 50 == 2 em ascII
+	
+	sb $t8, ($s0)
 	
 	li $v0, 4				# print "Chave encontrada"
 	la $a0, found_key_str
@@ -296,6 +301,7 @@ end_search_loop:
 	
 	
 not_found:
+	
 	
 	move $s2, $t9				# salvando a string do caminho percorrido em s2
 	
@@ -313,11 +319,19 @@ not_found:
 
 
 path_print:
+	li $v0, 4 			#imprimindo a string "caminho percorrido"
+	la $a0, path_str
+	syscall
+	
 	li $v0, 4
 	la $a0, raiz_str
 	syscall
 
-
+	li $v0, 4
+	la $a0, ($t9)
+	syscall
+	
+	
 path_print_loop:
 	
 	move $t9, $s2
@@ -326,7 +340,7 @@ path_print_loop:
 
 	beq $t0, 48, print_esq_str	
 	beq $t0, 49, print_dir_str		
-	beq $t0, $t8 ,end_path_loop 	
+	beq $t0, 50 ,end_path_loop 	
 	
 			
 print_esq_str:
@@ -348,6 +362,12 @@ print_dir_str:
 	j path_print_loop
 
 end_path_loop:
+	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	
 	jr $ra		#retornando ao processo que chamou print_path_loop
 
 
