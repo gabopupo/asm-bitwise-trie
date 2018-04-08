@@ -31,24 +31,19 @@ enter_removal_str:		.asciiz "Digite o binario para remocao: "
 succeeded_removal_str:		.asciiz "Chave removida com sucesso. \n"
 search_number_str:		.asciiz "Digite o binario para busca: "
 
-
 found_key_str:			.asciiz "Chave encontrada na arvore: "		
 not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "												
-path_str:			.asciiz "\nCaminho percorrido: "		
+path_str:			.asciiz "Caminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
-
 
 esq_str:			.asciiz "esq, "
 dir_str:			.asciiz "dir, "
 raiz_str:			.asciiz "raiz, "
 
-
-endl_str:			.asciiz "\n"
-
+endl_str:			.asciiz "\n"  #apenas uma quebra de linha
 
 
 
-success: .asciiz "Entrei na função \n"
 
 	.text
 	.globl main
@@ -72,6 +67,7 @@ main_loop:
 	li $v0, 5		# ler opcao escolhida do teclado
 	syscall
 	move $t0, $v0
+    	move $s4, $t0		# guardando o valor da operação 
     
   	li $t1, 1
   	li $t2, 2
@@ -190,7 +186,7 @@ insert:
 	move $t0, $s0	
 	move $t1, $s1
 	
-	li $t2, 1		#setando a raiz com o terminador 1
+	li $t2, 1		#setando o terminador da raiz como 1
 	sw $t2, 8($t1)
 			
 	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
@@ -281,7 +277,7 @@ search:
    	move $t9, $s2		#OBS.: Só estou guardando em s0 e s1 , pq acredito que eles serão uteis a outras funções
 
 
-	li $t6, 50		#colocando o valor 2 na primeira posição da string que representa o caminho, para indicar que o começo foi na raiz
+	li $t6, 50		#colocando o valor 2 ( 50 == 2 em ascII )na primeira posição da string do caminho percorrido, para indicar que passamos pela raiz
 	sb $t6, 0($t9)		
 	addi $t9, $t9, 1
 
@@ -314,18 +310,7 @@ node_dir:
    	j search
 
 
-left_path:
-	li $t6, 48			#guardando o valor 0, que indica que fui pra esquerda , na posição atual de t9
-	sb $t6, ($t9)			
-	addi $t9, $t9, 1
-	jr $ra
 
-right_path:
-
-	li $t6, 49			#guardando o valor 1, que indica que fui pra direita , na posição atual de t9
-	sb $t6, ($t9)			
-	addi $t9, $t9, 1
-	jr $ra
 
 
 search_loop:
@@ -349,6 +334,7 @@ search_loop:
 	
 	j search_loop
 	
+
 	
 search_left:
 
@@ -374,8 +360,7 @@ terminator_check:
 	
 end_search_loop:
 	
-	li $t6, 51				# flag que será armazenada na ultima posição da string( 51 == 3 em ascII )
-	sb $t6, ($t9)
+	jal end_path
 
 	
 	li $v0, 4				# print "Chave encontrada"
@@ -390,15 +375,16 @@ end_search_loop:
 	la $a0, endl_str
 	syscall
 	
-	jal path_print			# TODO: Caminho percorrido
+	jal path_print			
 	j search
 	
 	
 not_found:
 	
-	li $t6, 51				# flag que será armazenada na ultima posição da string( 51 == 3 em ascII )
-	sb $t6, ($t9)
-	
+	jal end_path				# Coloca uma flag na ultima posição da string 
+						# para marcar o fim do caminho 
+
+														
 	li $v0, 4				# print "Chave nao encontrada"
 	la $a0, not_found_key_str
 	syscall
@@ -406,32 +392,24 @@ not_found:
 	li $v0, 1				# print numero
 	li $a0, -1
 	syscall
-	
-	li $v0, 4
+		
+	li $v0, 4				#print "\n" 
 	la $a0, endl_str
-	syscall
-	
-	jal path_print 			# TODO: caminho percorrido
-
-	j search
-
-
-
-	
-
-path_print:
-	li $v0, 4 			#imprimindo a string "caminho percorrido: "
-	la $a0, path_str
 	syscall	
 	
-	li $v0, 4
-	la $a0, ($s2)
-	syscall
+		
+	jal path_print 				#imprime de fato o caminho percorrido durante a operação
+
+	beq $s4, 2, remove
+	beq $s4, 3, search
+
+
+
 	
-	
-	li $v0, 4
-	la $a0, endl_str
-	syscall
+path_print:
+	li $v0, 4 			#imprimindo a string "Caminho percorrido: "
+	la $a0, path_str
+	syscall	
 	
 	move $t9, $s2		
 	
@@ -439,11 +417,32 @@ path_print_loop:
 	
 	lb $t0, ($t9)
 
-	beq $t0, 48, print_esq_str	
+	beq $t0, 48, print_esq_str	# imprimindo o caminho de acordo com os valores contidos na string armazenada em t9
 	beq $t0, 49, print_dir_str		
 	beq $t0, 50, print_root		
 	beq $t0, 51 ,end_path_loop 	
 	
+left_path:
+	
+	li $t6, 48			#guardando o valor 0, que indica que fui pra esquerda , na posição atual de t9
+	sb $t6, ($t9)			
+	addi $t9, $t9, 1
+	jr $ra
+
+right_path:
+
+	li $t6, 49			#guardando o valor 1, que indica que fui pra direita , na posição atual de t9
+	sb $t6, ($t9)			
+	addi $t9, $t9, 1
+	jr $ra
+
+end_path:
+
+	li $t6, 51			# flag que será armazenada na ultima posição da string( 51 == 3 em ascII )
+	sb $t6, ($t9)
+	jr $ra
+
+
 print_root:
 	li $v0, 4
 	la $a0, raiz_str
@@ -481,19 +480,108 @@ end_path_loop:
 	jr $ra		#retornando ao processo que chamou print_path_loop
 
 
-
-
-
-
 remove: 
-    li $v0, 4 
-    la $a0, enter_removal_str
-    syscall
+  	li $v0, 4 
+	la $a0, enter_removal_str
+	syscall
 
-    jal read_str
+	jal read_str
+	move $t0, $s0			# numero a ser removido
+	move $t1, $s1			# raiz da arvore
+	move $t9, $s2			# string que representa o caminho percorrido
+	
+	la $t2, ($s1)			# ultimo terminador TRUE lido
+	
+	li $t6, 50			
+	sb $t6, 0($t9)			#guardando o valor 2 na string do caminho percorrido para indicar que passamos pela raiz
+	addi $t9, $t9, 1		#ir para a proxima posição da string do caminho percorrido
+	
+	bgezal $s0, remove_loop		# se o numero eh valido, entre na remocao
+	j remove
 
-    j remove
-		# TODO
+remove_loop:
+	lb $t3, ($t0)			# carrgue num[i]
+	beq $t3, 48, remove_left	# se num[i] == 0, navegue para o filho esquerdo
+	
+	jal right_path
+	
+	lw $t3, 4($t1)			# obtenha o conteudo de node_right
+	beq $t3, $zero, not_found	# se node_right == NULL, a chave nao existe na arvore
+	
+	lw $t3, 8($t1)			# guarde terminator do node atual
+
+	lb $t5, 1($t0)			# carregue num[i+1]
+	beq $t5, $zero, remove_check	# remova o numero, checando o ultimo terminador TRUE lido
+	
+	addi $t0, $t0, 1
+	lw $t1, 4($t1)
+	beq $t3, 0, remove_loop		# guarde o terminador apenas se ele for TRUE para o node atual
+	beq $t3, 1, store_terminator	
+	
+remove_left:
+	jal left_path
+	
+	lw $t3, 0($t1)			# obtenha o conteudo de node_right
+	beq $t3, $zero, not_found	# se node_right == NULL, a chave nao existe na arvore
+	
+	lw $t3, 8($t1)
+
+	lb $t5, 1($t0)			# carregue num[i+1]
+	beq $t5, $zero, remove_check	# remova o numero, checando o ultimo terminador TRUE lido
+	
+	addi $t0, $t0, 1
+	lw $t1, 0($t1)
+	beq $t3, 0, remove_loop		# guarde o terminador se ele for TRUE para o node atual
+	
+store_terminator:
+	la $a0, ($t1)			# guarde o ultimo node de terminador TRUE lido
+	lb $a1, ($t0)			# guarde o seu filho que pertenca ao numero a ser removido
+	j remove_loop
+	
+remove_check:
+	lw $t2, 0($t1)			# carregue node_left do ultimo node de terminador TRUE lido
+	lw $t3, 4($t1)			# carregue node_right do ultimo node de terminador TRUE lido
+	sne $t4, $t2, $zero		# se node_left != NULL, t2 = 1, do contrario, t2 = 0
+	sne $t5, $t3, $zero		# se node_right != NULL, t3 = 1, do contrario, t3 = 0
+	add $t4, $t4, $t5		# t4 = t4 OR t5 (se houver ao menos um filho, t4 = TRUE)
+	lw $t5, 8($t1)			# carregue o terminator do ultimo node visitado
+	sne $t5, $t4, 1			# se o ultimo node visitado tiver pelo menos um filho, terminator = FALSE
+	beq $t5, 0, null_t_child	# se nao tiver filhos, remova o filho do ultimo node de terminator TRUE lido
+					# que pertenca ao numero a ser removido
+	
+end_remove_loop:
+	
+	jal end_path			#setando uma flag para indicar fim do caminho
+	
+	li $v0, 4				# print "Chave encontrada"
+	la $a0, found_key_str
+	syscall
+	
+	li $v0, 4				# print numero
+	move $a0, $s0
+	syscall
+	
+	li $v0, 4				# print "\n" 
+	la $a0, endl_str
+	syscall
+	
+	jal path_print
+	
+	li $v0, 4
+	la $a0, succeeded_removal_str
+	syscall
+	
+	j remove
+	
+null_t_child:
+	beq $a1, 49, null_right
+	sw $zero, 0($a0)
+	j end_remove_loop
+	
+null_right:
+	sw $zero, 4($a0)
+	j end_remove_loop
+
 
 
 
@@ -504,4 +592,4 @@ print_tree:
 quit:
 	  li $v0, 10
 	  syscall
-		# TODO
+		
