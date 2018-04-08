@@ -232,7 +232,7 @@ insert_loop:
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 
 			
-	#addi $t1, $t1, 12		# Acessar o endereco do proximo no
+	
 	lw $t1, 4($t1)
 	
 	addi $t0, $t0, 1		# Acessar o proximo indice do numero (isto eh, i++)
