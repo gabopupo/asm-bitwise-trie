@@ -54,8 +54,9 @@ success: .asciiz "Entrei na função \n"
 	.globl main
 
 main:
+	li $a1, 2
 	jal create_node			# criar o node raiz da arvore
-	move $s1, $v0			# salvar a raiz
+	move $s1, $v0			# salvar a raiz. Seu endereço está agora na heap
 	
 	li $v0, 9			# alocar 16 (4*4) bytes na memoria
 	li $a0, 16
@@ -89,36 +90,37 @@ main_loop:
 			
 read_str:
     li $v0, 8
-    la $a0, binary_number # a string digitada fica salva em binary_number
+    la $a0, binary_number # a string digitada fica salva em binary_number . O $a0 tem o endereço base para a string alocada dinamicamente.
     li $a1, 16
     syscall
 
-    move $t1, $a0 # guardando o numero binario em um registrador para usá-lo durante esse processo
+    move $t0, $a0 # guardando o numero binario em um registrador para usá-lo durante esse processo
     
-    lb $t0, 0($t1)
-    beq $t0, 45, print_return # 45 == ascII para " - " ---> if(string[i] == '-') 
+    lb $t1, ($t0)
+    beq $t1, 45, print_return # 45 == ascII para " - " ---> if(string[i] == '-') 
 
 str_checker_loop:    
    
-    beq $t0, 10 , TenToZero	#TenToZero é a conversão do 10 == ENTER para um \0 
-    beq $t0, $zero, end_loop	# if( string[i] == '\0' )  
-    bgt $t0, 49, print_err	# if( string[i] > 49 ) --> se o caractere for maior do que o 1 em ASCII, imprima uma mensagem de erro 
-    blt $t0, 48, print_err	# if( string[i] < 48 )
+    beq $t1, 10 , TenToZero	#TenToZero é a conversão do 10 == ENTER para um \0 
+    beq $t1, $zero, end_loop	# if( string[i] == '\0' )  
+    bgt $t1, 49, print_err	# if( string[i] > 49 ) --> se o caractere for maior do que o 1 em ASCII, imprima uma mensagem de erro 
+    blt $t1, 48, print_err	# if( string[i] < 48 )
     
     
-    addi $t1, $t1, 1		# some 1 ao endereço base da string para ter acesso ao seu proximo caractere
-    lb $t0, ($t1)		# carregue o proximo byte da string no byte mais a direita do registrador $t0
+    addi $t0, $t0, 1		# some 1 ao endereço base da string para ter acesso ao proximo caractere
+    lb $t1, ($t0)		# carregue o proximo byte da string no byte mais a direita do registrador $t0
     j str_checker_loop
 
 
 TenToZero:
 	
-	li $t0, 0
-	sb $t0, ($t1)
+	move $t1, $zero 
+	sb $t1, ($t0) #o endereço que contem o 10 == ENTER , recebe o valor zero, o que substitui o ENTER 
 	
 end_loop:
-	move $s0, $a0 # no caso de o numero digitado ser válido, ele será salvo em um registrador s0
-			#problema: o a0 armazenado 
+	move $s0, $a0 # no caso de o numero digitado ser válido, ele será salvo em um registrador s0				
+		      #até aqui o endereço que é guardado por a0, tem seu CONTEUDO alterado 
+		      #Significa que na proxima vez que acessar esse endereço usando um registrador temporario, o conteudo dele poderá ser diferente
 	jr $ra
 
 
@@ -144,20 +146,34 @@ print_return:
 create_node:	
 		
 		
-		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
+		subi $sp, $sp, 8		# armazenar o endereco de retorno na pilha
 		sw $ra, 0($sp)
+		sw $s0, 4($sp)
 		
+		move $s0, $a0
 		li $v0, 9			# alocar 12 (4*3) bytes na memoria
 		li $a0, 12
 		syscall
 		
-		li $t0, 1
+		li $t9, 1			#OBS.: se atribuir a $t0, eu perco a referencia para a string que contem o numero binario
 		sw $zero, 0($v0)		# node->child_left = NULL;
 		sw $zero, 4($v0)		# node->child_right = NULL;
-		sw $t0, 8($v0)			# node->terminator = TRUE;
+		sw $t9, 8($v0)			# node->terminator = FALSE;
+		
+		beq $a1, 2, fim_create_node_dir	#se $a1 == 2 cria-se a raiz
+		beq $a1, 1, create_node_dir  	#Se $a0 == 1 insere v0 no filho da direita se nao na esquerda
+		sw $v0, 0($s0)			# salva o conteudo de v0 no nó da esquerda
+		
+		j fim_create_node_dir
+
+create_node_dir:		
+		sw $v0, 4($s0)			# salva o conteudo de v0 no nó da direita
+
+fim_create_node_dir:
 		
 		lw $ra, 0($sp)
-		addi $sp, $sp, 4
+		lw $s0, 4($sp)
+		addi $sp, $sp, 8
 	
 		jr $ra		
 
@@ -181,50 +197,67 @@ insert:
 
 
 insert_loop:	
-
-			
-	lb $t3, ($t0)			
-	beq $t3, $zero, end_insert_loop # condição de parada!
+	
+						
+	lb $t2, 0($t0)			
+	beq $t2, $zero, end_insert_loop # condição de parada!
 	
 	
 	li $t3 , 48			# 48 == 0 em ascII
-	beq $t0, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
+	beq $t2, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
 
-	lw $t2, 4($t1)			# carregue o conteudo de node_right
-	seq $t4, $t0, $zero		# se node_right == NULL, t4 = 1, do contrario, t4 = 0
-	subi $t4, $t4, 1		# t0 = t0 - 1
-	bgezal $t4, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
-
-	sw $v0, 4($t1)			# node_right recebe o node criado ($v0 contem o retorno de create_node)
+	lw $t4, 4($t1)			# carregue o conteudo de node_right
 	
-	addi $t1, $t1, 12		# acessar o endereco do proximo node
+	
+	seq $t5, $t4, $zero		# se node_right == NULL, t5 = 1, do contrario, t5 = 0
+	subi $t5, $t5, 1		# t0 = t0 - 1
+	
+	
+	move $a0, $t1			#Passando o nó atual como parametro em $a0
+	li $a1, 1
+	bgezal $t5, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
+
+	
+
+		
+	#addi $t1, $t1, 12		# acessar o endereco do proximo node
+	lw $t1, 4($t1)
 	addi $t0, $t0, 1		# acessar o proximo indice do numero (isto eh, i++)
 
 	j insert_loop
 
 	
-#	struct node_trie {
-#		node_trie *child_left;
-#		node_trie *child_right;
-#		int terminator
+#	struct node_trie { t1 = endereco dessa struct
+#		node_trie *child_left;  0(t1)
+#		node_trie *child_right; 4(t1)
+#		int terminator 8(t1)
 #	}
 
 insert_left:
-	lw $t2, 0($t1)			# carregue o conteudo de node_left
-	seq $t4, $t0, $zero		# se node_left == NULL, t4 = 1, do contrario, t4 = 0
-	subi $t4, $t4, 1		# t0 = t0 - 1
-	bgezal $t4, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
 	
-	sw $v0, 0($t0)			# node_left recebe o node criado ($v0 contem o retorno de create_node)
-	addi $t1, $t1, 12		# acessar o endereco do proximo node
+	lw $t4, 0($t1)			# carregue o conteudo de node_left
+	seq $t5, $t4, $zero		# se node_left == NULL, t4 = 1, do contrario, t4 = 0
+	subi $t5, $t5, 1		# t0 = t0 - 1
+	
+	move $a0, $t1			#passando argumentos que serão usados na função de criar o nó
+	li $a1, 0
+	bgezal $t5, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
+	
+	
+	#addi $t1, $t1, 12		# acessar o endereco do proximo node
+	lw $t1, 0($t1)
 	addi $t0, $t0, 1		# acessar o proximo indice do numero (isto eh, i++)
+	
 	j insert_loop			# volte ao loop de insercao
 
 		
 end_insert_loop:
-	li $t4, 1 			# O 1 representa um true booleano
-	sw $t4, 8($s1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
-	
+	li $v0, 4
+	la $a0, succeeded_insertion_str
+	syscall
+		
+	li $t5, 1 			# O 1 representa um true booleano
+	sw $t5, 8($t1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
 	
 	j insert
 
@@ -236,9 +269,11 @@ search:
    	syscall
 
    	jal read_str
-   	move $t0, $s0	
-	move $t1, $s1
-   	#move $t9, $s2	
+   	move $t0, $s0		#$t0 guarda temporariamente o endereço para a string. As alterações feitas em t0 , afetam diretamente o endereço
+   				# por ele guardado
+   				#OBS.: Lembre-se que s0 vem de a0, que armazenava o endereço da string alocada dinamicamente
+	move $t1, $s1		# o mesmo ocorre com t1, que agora recebe o endereço para a raiz da arvore
+   	#move $t9, $s2		#OBS.: Só estou guardando em s0 e s1 , pq acredito que eles serão uteis a outras funções
    	
    	
    	bgezal $s0, search_loop
@@ -252,20 +287,24 @@ search_loop:
 	#lb $t3, ($t0)
 	
 	li $t3, 48			# 48 == 0 em ascII
-	lb $t4, ($t0)			# carregue num[i]
+	lb $t4, ($t0)			# carregue o conteudo do byte de t0( ou seja, num[i]) em t4 
+	lb $t5, 1($t0)			## carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, para verificar se o proximo caracter é o final da string 
+	
+	
 	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
-	beq $t4, $zero, terminator_check # condicao de parada
+	beq $t5, $zero, terminator_check # condicao de parada. Verificação do terminador
 	
 	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
 	#addi $s0, $s0, 1
 	
 	
-	la $t2, 4($t1)			# carregue o conteudo de node_right
+	#la $t2, 4($t1)			# carregue o endereço do conteudo de node_right(não é isso que quero)
+	lw $t2, 4($t1)			# carregue o conteudo de node_right
 	beq $t2, $zero, not_found	# se node_right == NULL, o numero nao esta na arvore
 	
 		
 	addi $t0, $t0, 1		# i++
-	la $t1, 4($t1)			# navegue para o endereco do node filho
+	lw $t1, 4($t1)			# navegue para o endereco do node filho
 	
 	j search_loop
 	
@@ -274,16 +313,26 @@ search_left:
 
 	#beq $t0, $zero, terminator_check
 	
-	sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
+	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
 	#addi $s0, $s0, 1
 	
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
 	
 	addi $t0, $t0, 1
-	la $t1, 0($t1)
+	lw $t1, 0($t1)
 	j search_loop
+
+
+terminator_check:
+
 	
+	lw $t5, 8($t1)
+	beq $t5, $zero, not_found
+	beq $t5, 1, end_search_loop
+
+	j search	
+			
 	
 end_search_loop:
 	
@@ -299,6 +348,10 @@ end_search_loop:
 	
 	li $v0, 4				# print numero
 	move $a0, $s0
+	syscall
+	
+	li $v0, 4
+	la $a0, endl_str
 	syscall
 	
 	#jal path_print			# TODO: Caminho percorrido
@@ -318,19 +371,17 @@ not_found:
 	li $a0, -1
 	syscall
 	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
 	#jal path_print 			# TODO: caminho percorrido
 
 	j main_loop
 
 
-terminator_check:
 
-	lw $t5, 8($t1)
-	beq $t5, $zero, not_found
-	bgt $t5, $zero, end_search_loop
-
-
-
+	
 
 path_print:
 	li $v0, 4 			#imprimindo a string "caminho percorrido"
