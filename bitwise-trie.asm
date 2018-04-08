@@ -458,16 +458,93 @@ end_path_loop:
 
 
 remove: 
-    li $v0, 4 
-    la $a0, enter_removal_str
-    syscall
+  	li $v0, 4 
+	la $a0, enter_removal_str
+	syscall
 
-    jal read_str
+	jal read_str
+	move $t0, $s0			# numero a ser removido
+	move $t1, $s1			# raiz da arvore
+	la $t2, ($s1)			# ultimo terminador TRUE lido
+	
+	bgezal $s0, remove_loop		# se o numero eh valido, entre na remocao
+	j remove
 
-    j remove
-		# TODO
+remove_loop:
+	lb $t3, ($t0)			# carrgue num[i]
+	beq $t3, 48, remove_left	# se num[i] == 0, navegue para o filho esquerdo
+	
+	lw $t3, 4($t1)			# obtenha o conteudo de node_right
+	beq $t3, $zero, not_found	# se node_right == NULL, a chave nao existe na arvore
+	
+	lw $t3, 8($t1)			# guarde terminator do node atual
 
+	lb $t5, 1($t0)			# carregue num[i+1]
+	beq $t5, $zero, remove_check	# remova o numero, checando o ultimo terminador TRUE lido
+	
+	addi $t0, $t0, 1
+	lw $t1, 4($t1)
+	beq $t3, 0, remove_loop		# guarde o terminador apenas se ele for TRUE para o node atual
+	beq $t3, 1, store_terminator	
+	
+remove_left:
+	lw $t3, 0($t1)			# obtenha o conteudo de node_right
+	beq $t3, $zero, not_found	# se node_right == NULL, a chave nao existe na arvore
+	
+	lw $t3, 8($t1)
 
+	lb $t5, 1($t0)			# carregue num[i+1]
+	beq $t5, $zero, remove_check	# remova o numero, checando o ultimo terminador TRUE lido
+	
+	addi $t0, $t0, 1
+	lw $t1, 0($t1)
+	beq $t3, 0, remove_loop		# guarde o terminador se ele for TRUE para o node atual
+	
+store_terminator:
+	la $a0, ($t1)			# guarde o ultimo node de terminador TRUE lido
+	lb $a1, ($t0)			# guarde o seu filho que pertenca ao numero a ser removido
+	j remove_loop
+	
+remove_check:
+	lw $t2, 0($t1)			# carregue node_left do ultimo node de terminador TRUE lido
+	lw $t3, 4($t1)			# carregue node_right do ultimo node de terminador TRUE lido
+	sne $t4, $t2, $zero		# se node_left != NULL, t2 = 1, do contrario, t2 = 0
+	sne $t5, $t3, $zero		# se node_right != NULL, t3 = 1, do contrario, t3 = 0
+	add $t4, $t4, $t5		# t4 = t4 OR t5 (se houver ao menos um filho, t4 = TRUE)
+	lw $t5, 8($t1)			# carregue o terminator do ultimo node visitado
+	sne $t5, $t4, 1			# se o ultimo node visitado tiver pelo menos um filho, terminator = FALSE
+	beq $t5, 0, null_t_child	# se nao tiver filhos, remova o filho do ultimo node de terminator TRUE lido
+					# que pertenca ao numero a ser removido
+	
+end_remove_loop:
+	li $v0, 4				# print "Chave encontrada"
+	la $a0, found_key_str
+	syscall
+	
+	li $v0, 4				# print numero
+	move $a0, $s0
+	syscall
+	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	# TODO: caminho percorrido
+	
+	li $v0, 4
+	la $a0, succeeded_removal_str
+	syscall
+	
+	j main_loop
+	
+null_t_child:
+	beq $a1, 49, null_right
+	sw $zero, 0($a0)
+	j end_remove_loop
+	
+null_right:
+	sw $zero, 4($a0)
+	j end_remove_loop
 
 print_tree:
 	 	j main_loop
