@@ -199,8 +199,6 @@ insert:
 
 
 insert_loop:	
-	
-						
 															
 																
 	lb $t2, 0($t0)			
@@ -221,12 +219,11 @@ insert_loop:
 	li $a1, 1
 	bgezal $t5, create_node		# se t0 == 0, node nao existe entao crie. se t0 < 0, node existe.
 
-	
-
-		
+			
 	#addi $t1, $t1, 12		# acessar o endereco do proximo node
 	lw $t1, 4($t1)
 	addi $t0, $t0, 1		# acessar o proximo indice do numero (isto eh, i++)
+
 
 	j insert_loop
 
@@ -268,43 +265,56 @@ end_insert_loop:
 
 
 
-search: 
+search: 				#lembrar que é necessario retornar um valor da busca
    	li $v0, 4 
    	la $a0, search_number_str
    	syscall
 
    	jal read_str
+   	
+   	blt $s0, $zero, search
+   	
    	move $t0, $s0		#$t0 guarda temporariamente o endereço para a string. As alterações feitas em t0 , afetam diretamente o endereço
    				# por ele guardado
    				#OBS.: Lembre-se que s0 vem de a0, que armazenava o endereço da string alocada dinamicamente
 	move $t1, $s1		# o mesmo ocorre com t1, que agora recebe o endereço para a raiz da arvore
    	#move $t9, $s2		#OBS.: Só estou guardando em s0 e s1 , pq acredito que eles serão uteis a outras funções
-   	
-   	
-   	bgezal $s0, search_loop
-		# TODO	
+
+	lb $t2, 0($t0)
+
+	beq $t2, 48, node_esq
+	beq $t2, 49, node_dir
+	j search		#DESNECESSARIO!!!! 
+
+node_esq:
+	lw $t2, 0($t1)			# carregue o conteudo de node_esq
+	beq $t2, $zero, not_found
+	
+	lw $t1, 0($t1)
+	bgezal $s0, search_loop
    	j search
+
+node_dir:		
+	lw $t2, 4($t1)			# carregue o conteudo de node_right
+	beq $t2, $zero, not_found
+	
+	lw $t1, 4($t1)
+	bgezal $s0, search_loop
+   	j search
+
 
 
 search_loop:
 	
-	#beq $t0, $zero, terminator_check
-	#lb $t3, ($t0)
-	
-	lw $t7, 8($t1)
-	
-	li $v0, 1
-	la $a0, ($t7)
-	syscall
 	
 	
 	li $t3, 48			# 48 == 0 em ascII
-	lb $t4, ($t0)			# carregue o conteudo do byte de t0( ou seja, num[i]) em t4 
+	#lb $t4, ($t0)			# carregue o conteudo do byte de t0( ou seja, num[i]) em t4 
 	lb $t5, 1($t0)			# carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, para verificar se o proximo caracter é o final da string 
 	
-	
-	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
 	beq $t5, $zero, terminator_check # condicao de parada. Verificação do terminador
+	beq $t5, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
+	
 	
 	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
 	#addi $s0, $s0, 1
@@ -327,7 +337,7 @@ search_left:
 	
 	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
 	#addi $s0, $s0, 1
-	beq $t5, $zero, terminator_check
+	#beq $t5, $zero, terminator_check
 	
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
@@ -342,16 +352,11 @@ terminator_check:
 	
 	lw $t5, 8($t1)
 	
-	li $v0, 1
-	la $a0, ($t5)
-	syscall
-	
 	
 	beq $t5, $zero, not_found
 	beq $t5, 1, end_search_loop
 
-		
-			
+				
 	
 end_search_loop:
 	
