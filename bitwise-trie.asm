@@ -155,7 +155,7 @@ create_node:
 		li $a0, 12
 		syscall
 		
-		li $t9, 1			#OBS.: se atribuir a $t0, eu perco a referencia para a string que contem o numero binario
+		li $t9, 0			#OBS.: se atribuir a $t0, eu perco a referencia para a string que contem o numero binario
 		sw $zero, 0($v0)		# node->child_left = NULL;
 		sw $zero, 4($v0)		# node->child_right = NULL;
 		sw $t9, 8($v0)			# node->terminator = FALSE;
@@ -190,7 +190,9 @@ insert:
 	move $t0, $s0	
 	move $t1, $s1
 	
-		
+	li $t2, 1		#setando a raiz com o terminador 1
+	sw $t2, 8($t1)
+			
 	bgezal $s0, insert_loop #se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
 	
 	j insert
@@ -199,6 +201,8 @@ insert:
 insert_loop:	
 	
 						
+															
+																
 	lb $t2, 0($t0)			
 	beq $t2, $zero, end_insert_loop # condição de parada!
 	
@@ -259,6 +263,7 @@ end_insert_loop:
 	li $t5, 1 			# O 1 representa um true booleano
 	sw $t5, 8($t1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
 	
+	
 	j insert
 
 
@@ -286,9 +291,16 @@ search_loop:
 	#beq $t0, $zero, terminator_check
 	#lb $t3, ($t0)
 	
+	lw $t7, 8($t1)
+	
+	li $v0, 1
+	la $a0, ($t7)
+	syscall
+	
+	
 	li $t3, 48			# 48 == 0 em ascII
 	lb $t4, ($t0)			# carregue o conteudo do byte de t0( ou seja, num[i]) em t4 
-	lb $t5, 1($t0)			## carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, para verificar se o proximo caracter é o final da string 
+	lb $t5, 1($t0)			# carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, para verificar se o proximo caracter é o final da string 
 	
 	
 	beq $t4, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
@@ -315,6 +327,7 @@ search_left:
 	
 	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
 	#addi $s0, $s0, 1
+	beq $t5, $zero, terminator_check
 	
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
@@ -328,10 +341,16 @@ terminator_check:
 
 	
 	lw $t5, 8($t1)
+	
+	li $v0, 1
+	la $a0, ($t5)
+	syscall
+	
+	
 	beq $t5, $zero, not_found
 	beq $t5, 1, end_search_loop
 
-	j search	
+		
 			
 	
 end_search_loop:
@@ -355,7 +374,7 @@ end_search_loop:
 	syscall
 	
 	#jal path_print			# TODO: Caminho percorrido
-	j main_loop
+	j search
 	
 	
 not_found:
@@ -377,7 +396,7 @@ not_found:
 	
 	#jal path_print 			# TODO: caminho percorrido
 
-	j main_loop
+	j search
 
 
 
@@ -434,8 +453,6 @@ end_path_loop:
 	
 	
 	jr $ra		#retornando ao processo que chamou print_path_loop
-
-
 
 
 
