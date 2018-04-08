@@ -265,7 +265,7 @@ end_insert_loop:
 
 
 
-search: 				#lembrar que é necessario retornar um valor da busca
+search: 
    	li $v0, 4 
    	la $a0, search_number_str
    	syscall
@@ -278,7 +278,12 @@ search: 				#lembrar que é necessario retornar um valor da busca
    				# por ele guardado
    				#OBS.: Lembre-se que s0 vem de a0, que armazenava o endereço da string alocada dinamicamente
 	move $t1, $s1		# o mesmo ocorre com t1, que agora recebe o endereço para a raiz da arvore
-   	#move $t9, $s2		#OBS.: Só estou guardando em s0 e s1 , pq acredito que eles serão uteis a outras funções
+   	move $t9, $s2		#OBS.: Só estou guardando em s0 e s1 , pq acredito que eles serão uteis a outras funções
+
+
+	li $t6, 50		#colocando o valor 2 na primeira posição da string que representa o caminho, para indicar que o começo foi na raiz
+	sb $t6, 0($t9)		
+	addi $t9, $t9, 1
 
 	lb $t2, 0($t0)
 
@@ -287,6 +292,9 @@ search: 				#lembrar que é necessario retornar um valor da busca
 	j search		#DESNECESSARIO!!!! 
 
 node_esq:
+	
+	jal left_path
+
 	lw $t2, 0($t1)			# carregue o conteudo de node_esq
 	beq $t2, $zero, not_found
 	
@@ -295,6 +303,9 @@ node_esq:
    	j search
 
 node_dir:		
+
+	jal right_path	
+
 	lw $t2, 4($t1)			# carregue o conteudo de node_right
 	beq $t2, $zero, not_found
 	
@@ -303,24 +314,32 @@ node_dir:
    	j search
 
 
+left_path:
+	li $t6, 48			#guardando o valor 0, que indica que fui pra esquerda , na posição atual de t9
+	sb $t6, ($t9)			
+	addi $t9, $t9, 1
+	jr $ra
+
+right_path:
+
+	li $t6, 49			#guardando o valor 1, que indica que fui pra direita , na posição atual de t9
+	sb $t6, ($t9)			
+	addi $t9, $t9, 1
+	jr $ra
+
 
 search_loop:
 	
 	
-	
 	li $t3, 48			# 48 == 0 em ascII
-	#lb $t4, ($t0)			# carregue o conteudo do byte de t0( ou seja, num[i]) em t4 
 	lb $t5, 1($t0)			# carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, para verificar se o proximo caracter é o final da string 
 	
 	beq $t5, $zero, terminator_check # condicao de parada. Verificação do terminador
 	beq $t5, $t3, search_left	# se num[i] == 0, navegue ao filho esquerdo
 	
-	
-	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
-	#addi $s0, $s0, 1
+	jal right_path			#guardando o valor 1, que indica que fui pra direita , na posição atual de t9
 	
 	
-	#la $t2, 4($t1)			# carregue o endereço do conteudo de node_right(não é isso que quero)
 	lw $t2, 4($t1)			# carregue o conteudo de node_right
 	beq $t2, $zero, not_found	# se node_right == NULL, o numero nao esta na arvore
 	
@@ -333,12 +352,8 @@ search_loop:
 	
 search_left:
 
-	#beq $t0, $zero, terminator_check
-	
-	#sb $t4, ($t0)			# guarde a posição atual da numero binario em t9, que guarda temporariamente o caminho percorrido		
-	#addi $s0, $s0, 1
-	#beq $t5, $zero, terminator_check
-	
+	jal left_path			#guardando o valor 0, que indica que fui pra esquerda , na posição atual de t9
+		
 	lw $t2, 0($t1)
 	beq $t2, $zero, not_found
 	
@@ -348,8 +363,7 @@ search_left:
 
 
 terminator_check:
-
-	
+		
 	lw $t5, 8($t1)
 	
 	
@@ -360,11 +374,9 @@ terminator_check:
 	
 end_search_loop:
 	
-	#subi $t9, $t9, 5
-	#move $s2, $t9				# salvando a string do caminho percorrido em s2
-	#li $t8, 50				# flag para indicar que a busca terminou 50 == 2 em ascII
-	
-	#sb $t8, ($s0)
+	li $t6, 51				# flag que será armazenada na ultima posição da string( 51 == 3 em ascII )
+	sb $t6, ($t9)
+
 	
 	li $v0, 4				# print "Chave encontrada"
 	la $a0, found_key_str
@@ -378,14 +390,14 @@ end_search_loop:
 	la $a0, endl_str
 	syscall
 	
-	#jal path_print			# TODO: Caminho percorrido
+	jal path_print			# TODO: Caminho percorrido
 	j search
 	
 	
 not_found:
 	
-	
-	#move $s2, $t9				# salvando a string do caminho percorrido em s2
+	li $t6, 51				# flag que será armazenada na ultima posição da string( 51 == 3 em ascII )
+	sb $t6, ($t9)
 	
 	li $v0, 4				# print "Chave nao encontrada"
 	la $a0, not_found_key_str
@@ -399,7 +411,7 @@ not_found:
 	la $a0, endl_str
 	syscall
 	
-	#jal path_print 			# TODO: caminho percorrido
+	jal path_print 			# TODO: caminho percorrido
 
 	j search
 
@@ -408,29 +420,38 @@ not_found:
 	
 
 path_print:
-	li $v0, 4 			#imprimindo a string "caminho percorrido"
+	li $v0, 4 			#imprimindo a string "caminho percorrido: "
 	la $a0, path_str
-	syscall
+	syscall	
 	
 	li $v0, 4
-	la $a0, raiz_str
-	syscall
-
-	li $v0, 4
-	la $a0, ($s0)
+	la $a0, ($s2)
 	syscall
 	
+	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	move $t9, $s2		
 	
 path_print_loop:
 	
-	move $t9, $s2
-		
 	lb $t0, ($t9)
 
 	beq $t0, 48, print_esq_str	
 	beq $t0, 49, print_dir_str		
-	beq $t0, 50 ,end_path_loop 	
+	beq $t0, 50, print_root		
+	beq $t0, 51 ,end_path_loop 	
 	
+print_root:
+	li $v0, 4
+	la $a0, raiz_str
+	syscall	
+	
+	addi $t9, $t9, 1
+	
+	j path_print_loop
 			
 print_esq_str:
 	li $v0, 4
@@ -458,6 +479,8 @@ end_path_loop:
 	
 	
 	jr $ra		#retornando ao processo que chamou print_path_loop
+
+
 
 
 
