@@ -167,7 +167,7 @@ create_node:
 	li $a0, 12
 	syscall
 		
-	li $t9, 0			#OBS.: se atribuir a $t0, eu perco a referencia para a string que contem o numero binario
+	li $t9, 0			
 	sw $zero, 0($v0)		# node->child_left = NULL;
 	sw $zero, 4($v0)		# node->child_right = NULL;
 	sw $t9, 8($v0)			# node->terminator = FALSE;
