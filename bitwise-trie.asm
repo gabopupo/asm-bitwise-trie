@@ -189,7 +189,10 @@ fim_create_node_dir:
 	
 	jr $ra		
 
-
+repeated_node:
+	li $v0, 4
+	la $a0, repeated_insertion_str
+	syscall
 
 insert:		
 	
@@ -204,7 +207,9 @@ insert:
 	
 	li $t2, 1		#setando o terminador da raiz como 1
 	sw $t2, 8($t1)
-			
+	
+	jal search_repeated
+	beq $v0, 1, repeated_node		
 	bgezal $s0, insert_loop #Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
 	
 	j insert
@@ -267,7 +272,70 @@ end_insert_loop:
 	
 	j insert			# retorne para a insercao , para que um novo valor possa ser inserido
 
+search_repeated:
+	move $t3, $t0			# numero a ser inserido
+	move $t4, $t1			# raiz da arvore
+	lb $t5, 0($t3)			# Guardando o caractere atual do numero binario em t2
+	
+	beq $t5, 48, node_left_sr	# Se t2 == 48 (caractere 0 em ascII) , vá para a o no da esquerda
+	beq $t5, 49, node_right_sr	# Se t2 == 49 (caractere 1 em ascII), vá para a o no da direita
+	
+node_left_sr:
+	lw $t5, 0($t4)			# Carregue o conteudo de node_esq para verificar se ele eh NULL
+	beq $t5, $zero, not_found_sr	# Se node_esq == NULL , o numero nao foi encontrado
+	
+	lw $t4, 0($t4)			# Acessando o proximo no da esquerda
+	bgez $s0, search_loop_sr	# Se s0 >= 0, para o loop de busca
+	
+node_right_sr:
+	lw $t5, 4($t4)			# Carregue o conteudo de node_esq para verificar se ele eh NULL
+	beq $t5, $zero, not_found_sr	# Se node_esq == NULL , o numero nao foi encontrado
+	
+	lw $t4, 4($t4)			# Acessando o proximo no da esquerda
+	bgez $s0, search_loop_sr	# Se s0 >= 0, para o loop de busca
+	
+search_loop_sr:		# BUSCAR CHAVE REPETIDA ANTES DA INSERCAO
+	li $t5, 48			# t3 = 48 (caractere 0 em ascII)
+	lb $t6, 1($t3)			# Carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, 
+					# para verificar se o proximo caracter é o final da string 
+	
+	beq $t6, $zero, term_check_sr	# Condicao de parada. Verificação do terminador
+	beq $t6, $t5, search_left_sr	# Se num[i] == 0, navegue ao filho esquerdo
+	
+	
+	lw $t7, 4($t4)			# Carregue o conteudo de node_right
+	beq $t7, $zero, not_found_sr	# Se node_right == NULL, o numero nao esta na arvore
+	
+		
+	addi $t3, $t3, 1		# navegue para o proximo caractere do numero binario
+	lw $t4, 4($t4)			# navegue para o endereco do node filho	da direita
+	
+	j search_loop_sr		# retorne para o loop de busca
+	
+search_left_sr:		# NAVEGAR PARA O FILHO ESQUERDO (BUSCAR CHAVE REPETIDA ANTES DA INSERCAO)
+	lw $t7, 0($t4)			# Carregue o conteudo de node_esq	
+	beq $t7, $zero, not_found_sr	# Se node_esq == NULL, o numero nao esta na arvore
+	
+	addi $t3, $t3, 1		# navegue para o proximo caractere do numero binario
+	lw $t4, 0($t4)			# navegue para o endereco do node filho da esquerda
+	j search_loop_sr
+	
+term_check_sr:
+		
+	lw $t7, 8($t4)			# Coloque o terminador do no atual em t5
+	
+	beq $t7, $zero, not_found	# Se terminador == 0 , o numero nao foi encontrado
+	beq $t7, 1, end_search_loop_sr	# Se terminador == 1 , finalize o loop de busca, pois o numero foi encontrado
 
+	
+end_search_loop_sr:
+	li $v0, 1
+	jr $ra
+	
+not_found_sr:
+	li $v0, 0
+	jr $ra
+	
 search: 
    	li $v0, 4 			#print "Digite o binario para  busca"
    	la $a0, search_number_str
@@ -380,7 +448,10 @@ end_search_loop:
 	syscall
 	
 	jal path_print			# Processo para a impressao da string que contem o caminho percorrido
-	j search			# retorne para o inicio da busca
+	
+	li $v0, 1
+	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
+	beq $s4, 3, search
 	
 	
 not_found:
@@ -403,7 +474,8 @@ not_found:
 	
 		
 	jal path_print 			
-	
+
+	li $v0, 0
 	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
 	beq $s4, 3, search
 
