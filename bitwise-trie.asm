@@ -59,9 +59,9 @@ main:
 	li $t2, 0		
 
 	
-	sw $t2, 8($s1)		# setando o terminador da raiz como 0
-	sw $t0, 12($s1)		# setando o node_val da raiz como 2, para indicar que o nó é raiz. 
-	sw $t1, 16($s1)		# setando o nivel da raiz como 0
+	sw $t2, 8($s1)			# setando o terminador da raiz como 0
+	sw $t0, 12($s1)			# setando o node_val da raiz como 2, para indicar que o nó é raiz. 
+	sw $t1, 16($s1)			# setando o nivel da raiz como 0
 				
 
 	li $v0, 9			# Alocar 16 (4*4) bytes na memoria
@@ -72,15 +72,15 @@ main:
 	
 	
 main_loop:
-	li $v0, 4		# imprimir menu na tela
+	li $v0, 4			# imprimir menu na tela
 	la $a0, menu
 	syscall
 	
-	li $v0, 5		# ler opcao escolhida do teclado
+	li $v0, 5			# ler opcao escolhida do teclado
 	syscall
 	
 	move $t0, $v0
-    	move $s4, $t0		# guardar a opção escolhida em um registrador s4 para uso futuro 
+    	move $s4, $t0			# guardar a opção escolhida em um registrador s4 para uso futuro 
     
   	li $t1, 1
   	li $t2, 2
@@ -139,8 +139,8 @@ TenToZero:			# TenToZero é a substituição do 10 == ENTER por mais um \0
 		
 end_checker_loop:
 
-	move $s0, $a0 	# No caso de o numero digitado ser válido, ele será salvo em um registrador s0				
-		      	# Até aqui o endereço que é guardado por a0, tem seu conteudo alterado 
+	move $s0, $a0 		# No caso de o numero digitado ser válido, ele será salvo em um registrador s0				
+		      		# Até aqui o endereço que é guardado por a0, tem seu conteudo alterado 
 		    
 	jr $ra
 
@@ -150,13 +150,13 @@ print_str_err:
    	la $a0, invalid_insertion_str
   	syscall
     
-    	li $s0, -1 	#Carregando um valor negativo em s0 para marcar que a leitura da entrada encontrou um erro
+    	li $s0, -1 		#Carregando um valor negativo em s0 para marcar que a leitura da entrada encontrou um erro
 	
     	jr $ra
     
     
 
-print_return:		#imprime "Retornando ao menu.".
+print_return:			#imprime "Retornando ao menu.".
    	li $v0, 4
    	la $a0, menu_return_str
    	syscall
@@ -201,7 +201,7 @@ create_node:
 	sw $t9, 16($v0)	
 	
 	sw $v0, 0($s0)			# Salva o conteudo de v0 no nó da esquerda
-					# linka o nó atual com o novo no 
+					# linka o nó atual com o novo no criado
 	
 	j fim_create_node_dir
 
@@ -210,7 +210,7 @@ create_node_dir:
 	sw $t8, 12($v0)	
 	sw $t9, 16($v0)
 	
-	sw $v0, 4($s0)		# salva o conteudo de v0 no nó da direita
+	sw $v0, 4($s0)		# linka o nó atual com o novo no criado
 	
 
 
@@ -222,8 +222,8 @@ fim_create_node_dir:		# encerrar o procedimento de insercao (se estiver num filh
 	
 	jr $ra		
 
-repeated_node:		# encontrou-se uma chave repetida na arvore
-	li $v0, 4	# print "Chave repetida" e fazer nova insercao
+repeated_node:			# encontrou-se uma chave repetida na arvore
+	li $v0, 4		# print "Chave repetida" e fazer nova insercao
 	la $a0, repeated_insertion_str
 	syscall
 
@@ -240,11 +240,11 @@ insert:
 
 
 			
-	li $t6, 1		# t6 é usado para setar os niveis para os nós							
+	li $t6, 1		# t6 é usado para setar os niveis para os nós que forem criados						
 
 	jal search_repeated
 	beq $v0, 1, repeated_node		
-	bgezal $s0, insert_loop #Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
+	bgezal $s0, insert_loop # Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
 
 	
 	j insert
@@ -382,7 +382,7 @@ not_found_sr:				# a chave nao esta na arvore
 	jr $ra
 	
 search: 
-   	li $v0, 4 			#print "Digite o binario para  busca"
+   	li $v0, 4 			# Print "Digite o binario para  busca"
    	la $a0, search_number_str
    	syscall
 
@@ -599,6 +599,7 @@ print_dir_str:				# imprimir "dir" no caminho
 	
 	j path_print_loop
 
+
 end_path_loop:				# encerrar o laco de construcao da string do caminho
 	
 	li $v0, 4
@@ -606,7 +607,7 @@ end_path_loop:				# encerrar o laco de construcao da string do caminho
 	syscall
 	
 	
-	jr $ra		# Retornando ao processo que chamou print_path_loop
+	jr $ra				# Retornando ao processo que chamou print_path_loop
 
 
 remove: 
@@ -629,6 +630,7 @@ remove:
 	
 	bgezal $s0, remove_loop		# Se o numero eh valido, entre no loop de remocao
 	j remove
+
 
 remove_loop:
 	lb $t3, ($t0)			# Carregue num[i]
@@ -726,38 +728,39 @@ null_right:
 	j end_remove_loop
 
 
+
 print_tree:
 	#s1 guarda raiz
 	subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
 	sw $ra, 0($sp)
 	
-	move $t1, $sp #t1 guarda a posição da stack antes da implementação da fila
+	move $t1, $sp 			#t1 guarda a posição da stack antes da implementação da fila
 	
 	subi $sp, $sp, 4
-	sw $s1, 0($sp) #enfileira o nó raiz
-	move $t0, $sp #t0 guarda inicio da fila
+	sw $s1, 0($sp) 			#enfileira o nó raiz
+	move $t0, $sp			#t0 guarda inicio da fila
 	li $t5, -1
 	
 loop_visu:
-	lw $t2, 0($t0) #t2 recebe o primeiro no da fila	
-	lw $t3, 0($t2) #t3 recebe o filho da esquerda
-	lw $t4, 4($t2) #t4 recebe o filho da direita
-	lw $t6, 16($t2) #t6 recebe o nivel do nó atual
+	lw $t2, 0($t0) 			#t2 recebe o primeiro no da fila	
+	lw $t3, 0($t2)			#t3 recebe o filho da esquerda
+	lw $t4, 4($t2) 			#t4 recebe o filho da direita
+	lw $t6, 16($t2) 		#t6 recebe o nivel do nó atual
 	
 	
 	beq $t3, 0, visu_enfileirar_dir #pular se t3 é NULL
 	subi $sp, $sp, 4
-	sw $t3, 0($sp) #enfileira filho da esquerda
+	sw $t3, 0($sp) 			#enfileira filho da esquerda
 	
 visu_enfileirar_dir:
-	beq $t4, 0, visu_mudar_nivel #pular se t4 é NULL
+	beq $t4, 0, visu_mudar_nivel 	#pular se t4 é NULL
 	subi $sp, $sp, 4
-	sw $t4, 0($sp) #enfileira filho da direita
+	sw $t4, 0($sp) 			#enfileira filho da direita
 
 		
 visu_mudar_nivel:
 	beq $t5, $t6, visu_impressao
-	addi $t5, $t5, 1 #acrescenta um no nivel atual
+	addi $t5, $t5, 1 		#acrescenta um no nivel atual
 	
 	li $v0, 4
 	la $a0, endl_str
@@ -779,16 +782,15 @@ visu_mudar_nivel:
 	syscall
 	
 visu_impressao:
-	la $a0, ($t2)
-	jal print_node # falta passar o no atual que esta em t2
+	la $a0, ($t2)			# Passando o nó atual como parametro para a função print_node
+	jal print_node			# falta passar o no atual que esta em t2
 	
-	subi $t0, $t0, 4 #t0 vai para o proximo no da fila
+	subi $t0, $t0, 4 		# t0 vai para o proximo no da fila
 
 
-	
 	bge $t0, $sp, loop_visu
 	
-	move $sp, $t1 #apaga a fila
+	move $sp, $t1 			# apaga a fila criada na stack
 	
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
@@ -802,10 +804,10 @@ visu_impressao:
 	
 print_node:
 	
-	move $t9, $a0 # agora estou passando o nó atual 
+	move $t9, $a0 
 
 	li $v0, 11
-	li $a0, 40		# 40 == ( em ascII )
+	li $a0, 40		# 40 == ( ( em ascII )
 	syscall
 
 	lw $t3, 12($t9)
@@ -881,15 +883,13 @@ node_address:
 	syscall
 
 	li $v0, 11
-	li $a0, 41	# 41 == ) ascII
+	li $a0, 41	# 41 == ) em ascII
 	syscall
 	
 	
 	jr $ra
 
 	
-		
-			
 					
 quit:
 	  li $v0, 10
