@@ -151,9 +151,9 @@ print_return:		#imprime "Retornando ao menu.".
    	j main_loop	
 
 #	struct node_trie { t1 = endereco dessa struct
-#		node_trie *child_left;  0(t1)
-#		node_trie *child_right; 4(t1)
-#		int terminator 8(t1)
+#		node_trie *child_left;			0(t1)
+#		node_trie *child_right;			4(t1)
+#		int terminator				8(t1)
 #	}
 
 create_node:	
@@ -181,7 +181,7 @@ create_node:
 create_node_dir:		
 	sw $v0, 4($s0)		# salva o conteudo de v0 no nó da direita
 
-fim_create_node_dir:
+fim_create_node_dir:		# encerrar o procedimento de insercao (se estiver num filho direito)
 		
 	lw $ra, 0($sp)
 	lw $s0, 4($sp)
@@ -189,8 +189,8 @@ fim_create_node_dir:
 	
 	jr $ra		
 
-repeated_node:
-	li $v0, 4
+repeated_node:		# encontrou-se uma chave repetida na arvore
+	li $v0, 4	# print "Chave repetida" e fazer nova insercao
 	la $a0, repeated_insertion_str
 	syscall
 
@@ -328,12 +328,12 @@ term_check_sr:
 	beq $t7, 1, end_search_loop_sr	# Se terminador == 1 , finalize o loop de busca, pois o numero foi encontrado
 
 	
-end_search_loop_sr:
-	li $v0, 1
+end_search_loop_sr:			# a chave a ser inserida ja esta na arvore
+	li $v0, 1			# encontrado = TRUE
 	jr $ra
 	
-not_found_sr:
-	li $v0, 0
+not_found_sr:				# a chave nao esta na arvore 
+	li $v0, 0			# encontrado = FALSE
 	jr $ra
 	
 search: 
@@ -419,7 +419,7 @@ search_left:
 	
 	addi $t0, $t0, 1		# navegue para o proximo caractere do numero binario
 	lw $t1, 0($t1)			# navegue para o endereco do node filho da esquerda
-	j search_loop
+	j search_loop			# retorne para o loop de busca
 
 
 terminator_check:
@@ -473,7 +473,7 @@ not_found:
 	syscall	
 	
 		
-	jal path_print 			
+	jal path_print 			# IMPRIMIR CAMINHO FEITO PARA ENCONTRAR A CHAVE
 
 	li $v0, 0
 	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
@@ -519,7 +519,7 @@ end_path:
 	jr $ra
 
 
-print_root:
+print_root:				# imprimir "raiz" no caminho
 	li $v0, 4			
 	la $a0, raiz_str
 	syscall	
@@ -528,7 +528,7 @@ print_root:
 	
 	j path_print_loop
 			
-print_esq_str:
+print_esq_str:				# imprimir "esq" no caminho
 	li $v0, 4
 	la $a0, esq_str
 	syscall
@@ -537,7 +537,7 @@ print_esq_str:
 	
 	j path_print_loop
 
-print_dir_str:
+print_dir_str:				# imprimir "dir" no caminho
 	li $v0, 4
 	la $a0, dir_str
 	syscall
@@ -546,7 +546,7 @@ print_dir_str:
 	
 	j path_print_loop
 
-end_path_loop:
+end_path_loop:				# encerrar o laco de construcao da string do caminho
 	
 	li $v0, 4
 	la $a0, endl_str
@@ -676,7 +676,7 @@ print_tree:
 	 	j main_loop
 		# TODO
 
-quit:
+quit:					# encerre o programa
 	  li $v0, 10
 	  syscall
 		
