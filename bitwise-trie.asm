@@ -54,14 +54,17 @@ main:
 	
 	li $t0, 2
 	li $t1, 0			
-	li $t2, 1		
+	li $t2, 0		
 
 	
-	sw $t2, 8($s1)		# setando o terminador da raiz como 1
+	sw $t2, 8($s1)		# setando o terminador da raiz como 0
 	sw $t0, 12($s1)		# setando o node_val da raiz como 2, para indicar que o nó é raiz. 
 	sw $t1, 16($s1)		# setando o nivel da raiz como 0
 		
+	la $a0, ($s1)						
+	jal print_node
 		
+				
 	li $v0, 9			# Alocar 16 (4*4) bytes na memoria
 	li $a0, 16
 	syscall
@@ -219,6 +222,8 @@ insert:
 	move $t1, $s1
 	
 	
+
+			
 	li $t6, 1		# t6 é usado para setar os niveis para os nós							
 	bgezal $s0, insert_loop # Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
 	
@@ -247,13 +252,21 @@ insert_loop:
 	li $a1, 1			# Passando 1 como argumento para que seja criado um nó a direita do nó atual
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 
+	la $a0, ($t1)						
+	jal print_node
+
 	sw $t6, 16($t1)			# Setando o valor do nivel do no
 	addi $t6, $t6, 1
-		
+	
+	la $a0, ($t1)						
+	jal print_node	
+				
 	li $t3, 1
 	sw $t3, 12($t1)			# guardando 1 em node_val do no atual  
-			
-											
+	
+	la $a0, ($t1)						
+	jal print_node
+																					
 	lw $t1, 4($t1)
 	
 	addi $t0, $t0, 1		# Acessar a proxima posição da string do numero binario
@@ -273,11 +286,20 @@ insert_left:
 	li $a1, 0			# Passando 0 como argumento para que seja criado um no a esquerda do no atual
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 
+	la $a0, ($t1)						
+	jal print_node
+
 	sw $t6, 16($t1)			# Setando o valor do nivel do no
 	addi $t6, $t6, 1
 	
+	la $a0, ($t1)						
+	jal print_node
+	
 	li $t3, 0
 	sw $t3, 12($t1)			# guardando 0 em node_val do no atual  
+	
+	la $a0, ($t1)						
+	jal print_node
 	
 	lw $t1, 0($t1)
 	
@@ -287,6 +309,10 @@ insert_left:
 
 		
 end_insert_loop:
+	
+	
+	
+	
 	li $v0, 4			# print "Numero inserido com sucesso"
 	la $a0, succeeded_insertion_str
 	syscall
@@ -294,6 +320,13 @@ end_insert_loop:
 	li $t5, 1 			# O 1 representa um true booleano
 	sw $t5, 8($t1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
 	sw $t6, 16($t1)			# Setando o nivel do ultimo nó inserido
+	
+	la $a0, ($s1)						
+	jal print_node
+	
+	la $a0, ($t1)						
+	jal print_node
+	
 	
 	j insert			# retorne para a insercao , para que um novo valor possa ser inserido
 
@@ -625,15 +658,105 @@ null_right:
 	j end_remove_loop
 
 
+
+
+		
+
+
+print_tree:
+	#s1 guarda raiz
+	subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
+	sw $ra, 0($sp)
+	
+	move $t1, $sp #t1 guarda a posição da stack antes da implementação da fila
+	
+	subi $sp, $sp, 4
+	sw $s1, 0($sp) #enfileira o nó raiz
+	move $t0, $sp #t0 guarda inicio da fila
+	li $t5, -1
+	
+loop_visu:
+	lw $t2, 0($t0) #t2 recebe o primeiro no da fila	
+	lw $t3, 0($t2) #t3 recebe o filho da esquerda
+	lw $t4, 4($t2) #t4 recebe o filho da direita
+	lw $t6, 16($t2) #t6 recebe o nivel do nó atual
+	
+	
+	beq $t3, 0, visu_enfileirar_dir #pular se t3 é NULL
+	subi $sp, $sp, 4
+	sw $t3, 0($sp) #enfileira filho da esquerda
+	
+visu_enfileirar_dir:
+	beq $t4, 0, visu_mudar_nivel #pular se t4 é NULL
+	subi $sp, $sp, 4
+	sw $t4, 0($sp) #enfileira filho da direita
+
+		
+visu_mudar_nivel:
+	beq $t5, $t6, visu_impressao
+	addi $t5, $t5, 1 #acrescenta um no nivel atual
+	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	#imprimir N
+	li $v0, 11
+	li $a0, 78
+	syscall
+	
+	#imprimir o nivel
+	li $v0, 1
+	la $a0, ($t5)
+	syscall
+	
+	#imprimir o espaço
+	li $v0, 11
+	li $a0, 32
+	syscall
+	
+visu_impressao:
+	la $a0, ($t2)
+	
+	#lw $t0, 12($a0)
+	#li $v0, 1
+	#la $a0, ($t0)
+	#syscall
+	
+	
+	jal print_node # falta passar o no atual que esta em t2
+	
+	subi $t0, $t0, 4 #t0 vai para o proximo no da fila
+
+	
+	bne $t0, $sp, loop_visu
+	move $sp, $t1 #apaga a fila
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	
+	#jr $ra	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	
+	j main_loop
+	
 print_node:
 	
-	move $t5, $t2
+	move $t9, $a0 # agora estou passando o nó atual 
+
+	#lw $t0, 12($t5)
+	#li $v0, 1
+	#la $a0, ($t0)
+	#syscall
 
 	li $v0, 11
 	li $a0, 40		# 40 == ( em ascII )
 	syscall
 
-	lw $t3, 12($t5)
+	lw $t3, 12($t9)
 	
 	beq $t3, 2, print_root_node
 
@@ -645,7 +768,7 @@ print_node:
 	la $a0, comma_str
 	syscall
 
-	lw $t3, 8($t5)
+	lw $t3, 8($t9)
 	
 	beq $t3, 0, print_NT
 	beq $t3, 1, print_T
@@ -684,11 +807,9 @@ print_T:
 
 	j node_address
 
-
-
 node_address:
 
-	lw $t3, 0($t5)
+	lw $t3, 0($t9) # impressao do endereço do no esquerdo
 	li $v0, 1
 	la $a0, ($t3)
 	syscall
@@ -697,7 +818,7 @@ node_address:
 	la $a0, comma_str
 	syscall
 	
-	lw $t3, 4($t5)
+	lw $t3, 4($t9)	# impressao do endereço do no direito
 	li $v0, 1
 	la $a0, ($t3)
 	syscall
@@ -708,82 +829,10 @@ node_address:
 	
 	jr $ra
 
-
+	
 		
-
-
-print_tree:
-	#s1 guarda raiz
-	subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
-	sw $ra, 0($sp)
-	
-	move $t1, $sp #t1 guarda a posição da stack antes da implementação da fila
-	
-	subi $sp, $sp, 4
-	sw $s1, 0($sp) #enfileira o nó raiz
-	move $t0, $sp #t0 guarda inicio da fila
-	li $t5, -1
-	
-loop_visu:
-	lw $t2, 0($t0) #t2 recebe o primeiro no da fila	
-	lw $t3, 0($t2) #t3 recebe o filho da esquerda
-	lw $t4, 4($t2) #t4 recebe o filho da direita
-	lw $t6, 16($t2) #t6 recebe o nivel do nó atual
-	
-	beq $t3, 0, visu_enfileirar_dir #pular se t3 é NULL
-	subi $sp, $sp, 4
-	sw $t3 0($sp) #enfileira filho da esquerda
-	
-visu_enfileirar_dir:
-	beq $t4, 0, visu_mudar_nivel #pular se t4 é NULL
-	subi $sp $sp, 4
-	sw $t4, 0($sp) #enfileira filho da direita
-
-		
-visu_mudar_nivel:
-	beq $t5, $t6, visu_impressao
-	addi $t5, $t5, 1 #acrescenta um no nivel atual
-	
-	li $v0, 4
-	la $a0, endl_str
-	syscall
-	
-	#imprimir N
-	li $v0, 11
-	li $a0, 78
-	syscall
-	
-	#imprimir o nivel
-	li $v0, 1
-	la $a0, ($t5)
-	syscall
-	
-	#imprimir o espaço
-	li $v0, 11
-	li $a0, 32
-	syscall
-	
-visu_impressao:
-	la $a0, ($t2)
-	jal print_node # falta passar o no atual que esta em t2
-	
-	subi $t0, $t0, 4 #t0 vai para o proximo no da fila
-	
-	bne $t0, $sp, loop_visu
-	move $sp, $t1 #apaga a fila
-	
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	
-	#jr $ra	
-	li $v0, 4
-	la $a0, endl_str
-	syscall
-	
-	
-	j main_loop
-	
-	
+			
+					
 quit:
 	  li $v0, 10
 	  syscall
