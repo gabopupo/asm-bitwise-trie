@@ -495,7 +495,8 @@ remove:
 	move $t1, $s1			# Raiz da arvore
 	move $t9, $s2			# String que representa o caminho percorrido
 	
-	la $t2, ($s1)			# ultimo terminador TRUE lido
+	la $a0, ($s1)			# ultimo terminador TRUE lido
+	lb $a1, ($s0)
 	
 	li $t6, 50			
 	sb $t6, 0($t9)			# Guardando o valor 2 na string do caminho percorrido para indicar que passamos pela raiz
@@ -510,16 +511,16 @@ remove_loop:
 	
 	jal right_path
 	
-	lw $t3, 4($t1)			# Obtenha o conteudo de node_right
-	beq $t3, $zero, not_found	# Se node_right == NULL, a chave nao existe na arvore
+	lw $t1, 4($t1)			# Obtenha o conteudo de node_right
+	beq $t1, $zero, not_found	# Se node_right == NULL, a chave nao existe na arvore
 	
 	lw $t3, 8($t1)			# Guarde terminator do node atual
 
-	lb $t5, 1($t0)			# Carregue num[i+1]
-	beq $t5, $zero, remove_check	# Remova o numero, checando o ultimo terminador TRUE lido
+	lb $t4, 1($t0)			# Carregue num[i+1]
+	beq $t4, $zero, remove_check	# Remova o numero, checando o ultimo terminador TRUE lido
 	
 	addi $t0, $t0, 1
-	lw $t1, 4($t1)
+	#lw $t1, 4($t1)
 	
 	beq $t3, 0, remove_loop		# Guarde o terminador apenas se ele for TRUE para o node atual
 	beq $t3, 1, store_terminator	
@@ -527,16 +528,16 @@ remove_loop:
 remove_left:
 	jal left_path
 	
-	lw $t3, 0($t1)			# Obtenha o conteudo de node_esq
-	beq $t3, $zero, not_found	# Se node_esq == NULL, a chave nao existe na arvore
+	lw $t1, 0($t1)			# Obtenha o conteudo de node_esq
+	beq $t1, $zero, not_found	# Se node_esq == NULL, a chave nao existe na arvore
 	
 	lw $t3, 8($t1)
 
-	lb $t5, 1($t0)			# Carregue num[i+1]
-	beq $t5, $zero, remove_check	# Remova o numero, checando o ultimo terminador TRUE lido
+	lb $t4, 1($t0)			# Carregue num[i+1]
+	beq $t4, $zero, remove_check	# Remova o numero, checando o ultimo terminador TRUE lido
 	
 	addi $t0, $t0, 1
-	lw $t1, 0($t1)
+	#lw $t1, 0($t1)
 	beq $t3, 0, remove_loop		# Guarde o terminador se ele for TRUE para o node atual
 	
 store_terminator:
@@ -545,14 +546,14 @@ store_terminator:
 	j remove_loop
 	
 remove_check:
-	lw $t2, 0($t1)			# Carregue node_left do ultimo node de terminador TRUE lido
-	lw $t3, 4($t1)			# Carregue node_right do ultimo node de terminador TRUE lido
-	sne $t4, $t2, $zero		# Se node_left != NULL, t2 = 1, do contrario, t2 = 0
-	sne $t5, $t3, $zero		# Se node_right != NULL, t3 = 1, do contrario, t3 = 0
-	or $t4, $t4, $t5		# t4 = t4 OR t5 (se houver ao menos um filho, t4 = TRUE)
-	sne $t5, $t4, 1			# Se o ultimo node visitado tiver pelo menos um filho, terminator = FALSE
-	sw $t5, 8($t1)			# Atualize o terminator do ultimo node visitado
-	beq $t4, 0, null_t_child	# Se nao tiver filhos, remova o filho do ultimo node de terminator TRUE lido
+	lw $t5, 0($t1)			# Carregue node_left do ultimo node de terminador TRUE lido
+	lw $t6, 4($t1)			# Carregue node_right do ultimo node de terminador TRUE lido
+	sne $t7, $t5, $zero		# Se node_left != NULL, t2 = 1, do contrario, t2 = 0
+	sne $t8, $t6, $zero		# Se node_right != NULL, t3 = 1, do contrario, t3 = 0
+	or $t7, $t7, $t8		# t4 = t4 OR t5 (se houver ao menos um filho, t4 = TRUE)
+	sne $t8, $t7, 1			# Se o ultimo node visitado tiver pelo menos um filho, terminator = FALSE
+	sw $t8, 8($t1)			# Atualize o terminator do ultimo node visitado
+	beq $t7, 0, null_t_child	# Se nao tiver filhos, remova o filho do ultimo node de terminator TRUE lido
 					# que pertenca ao numero a ser removido
 	
 end_remove_loop:
@@ -580,10 +581,12 @@ end_remove_loop:
 	j remove
 	
 null_t_child:
+#	beq $a0, $s1, null_root 
 	beq $a1, 49, null_right		
 	sb $zero, 0($a0)
 	j end_remove_loop
 	
+#null_root:
 null_right:
 	sw $zero, 4($a0)
 	j end_remove_loop
