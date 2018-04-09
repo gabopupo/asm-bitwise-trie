@@ -11,7 +11,7 @@
 #	  Participacao: Busca; Remoção: Visualização da arvore e; Debug
 #
 #         Nome:	Gabriel Romualdo Silveira Pupo 							No USP: 9896250
-#	  Participacao: Inserção; Busca; Busca por chaves repetidas e; remoação
+#	  Participacao: Inserção; Busca; Busca por chaves repetidas e; remoção
 #
 # ===============================================================================================================
 
