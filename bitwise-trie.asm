@@ -8,7 +8,7 @@
 #	  Participacao:	Leitura e checagem de strings; inserção; busca e; visualização da arvore
 #
 #         Nome:	Paulo Henrique Bodnarchuki da Cruz						No USP:	9790944
-#	  Participacao: Busca; Remoção: Visualização da arvore e; Debug
+#	  Participacao: Busca; Remoção; Visualização da arvore e; Debug
 #
 #         Nome:	Gabriel Romualdo Silveira Pupo 							No USP: 9896250
 #	  Participacao: Inserção; Busca; Busca por chaves repetidas e; remoção
