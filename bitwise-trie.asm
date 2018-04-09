@@ -35,9 +35,9 @@ not_found_key_str:		.asciiz "Chave nao encontrada na arvore: "
 path_str:			.asciiz "Caminho percorrido: "		
 menu_return_str:		.asciiz "Retornando ao menu. \n"
 
-esq_str:			.asciiz "esq, "
-dir_str:			.asciiz "dir, "
-raiz_str:			.asciiz "raiz, "
+esq_str:			.asciiz ", esq"
+dir_str:			.asciiz ", dir"
+raiz_str:			.asciiz "raiz"
 
 endl_str:			.asciiz "\n"  #quebra de linha
 
@@ -511,6 +511,11 @@ remove_loop:
 	
 	jal right_path
 	
+	lw $t2, 0($t1)			# detectar bifurcacoes: se o filho esquerdo existe, guarde o node pai usando store_terminator
+	sne $t2, $t2, $zero		# para que os dois filhos nao sejam removidos ao mesmo tempo
+	subi $t2, $t2, 1
+	bgezal $t2, store_terminator
+	
 	lw $t1, 4($t1)			# Obtenha o conteudo de node_right
 	beq $t1, $zero, not_found	# Se node_right == NULL, a chave nao existe na arvore
 	
@@ -528,6 +533,11 @@ remove_loop:
 remove_left:
 	jal left_path
 	
+	lw $t2, 4($t1)			# detectar bifurcacoes: se o filho direito existe, guarde o node pai usando store_terminator
+	sne $t2, $t2, $zero		# para que os dois filhos nao sejam removidos ao mesmo tempo
+	subi $t2, $t2, 1
+	bgezal $t2, store_terminator
+	
 	lw $t1, 0($t1)			# Obtenha o conteudo de node_esq
 	beq $t1, $zero, not_found	# Se node_esq == NULL, a chave nao existe na arvore
 	
@@ -543,7 +553,8 @@ remove_left:
 store_terminator:
 	la $a0, ($t1)			# Guarde o ultimo node de terminador TRUE lido
 	lb $a1, ($t0)			# Guarde o seu filho que pertenca ao numero a ser removido
-	j remove_loop
+	beq $t3, 1, remove_loop
+	jr $ra
 	
 remove_check:
 	lw $t5, 0($t1)			# Carregue node_left do ultimo node de terminador TRUE lido
@@ -553,8 +564,8 @@ remove_check:
 	or $t7, $t7, $t8		# t4 = t4 OR t5 (se houver ao menos um filho, t4 = TRUE)
 	sne $t8, $t7, 1			# Se o ultimo node visitado tiver pelo menos um filho, terminator = FALSE
 	sw $t8, 8($t1)			# Atualize o terminator do ultimo node visitado
-	beq $t7, 0, null_t_child	# Se nao tiver filhos, remova o filho do ultimo node de terminator TRUE lido
-					# que pertenca ao numero a ser removido
+	beq $t8, 1, null_t_child	# Se o ultimo node visitado (que deve ser removido) nao tiver filhos, remova o filho do
+					# ultimo node de terminator TRUE lido, que pertence ao numero a ser removido
 	
 end_remove_loop:
 	
@@ -579,20 +590,15 @@ end_remove_loop:
 	syscall
 	
 	j remove
-	
+
 null_t_child:
-#	beq $a0, $s1, null_root 
-	beq $a1, 49, null_right		
-	sb $zero, 0($a0)
-	j end_remove_loop
+	beq $a1, 49, null_right		# se o filho direito do ultimo node de terminador TRUE lido deve ser removido, remova-o
+	sw $zero, 0($a0)		# remova o filho esquerdo do ultimo node de terminador TRUE lido
+	j end_remove_loop		# encerre a remocao
 	
-#null_root:
 null_right:
-	sw $zero, 4($a0)
+	sw $zero, 4($a0)		# remova o filho direito do ultimo node de terminador TRUE lido
 	j end_remove_loop
-
-
-
 
 print_tree:
 	 	j main_loop
