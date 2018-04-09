@@ -48,9 +48,9 @@ endl_str:			.asciiz "\n"  #quebra de linha
 	.globl main
 
 main:
-	li $a1, 2			# Passando 2 como argumento em a1 para que o nÃ³ raiz seja criado
+	li $a1, 2			# Passando 2 como argumento em a1 para que o nó raiz seja criado
 	jal create_node			# Criar o node raiz da arvore
-	move $s1, $v0			# Salvar a raiz. Seu endereÃ§o estÃ¡ agora na heap
+	move $s1, $v0			# Salvar a raiz. Seu endereço está agora na heap
 	
 	li $v0, 9			# Alocar 16 (4*4) bytes na memoria
 	li $a0, 16
@@ -68,7 +68,7 @@ main_loop:
 	syscall
 	
 	move $t0, $v0
-    	move $s4, $t0		# guardar a opÃ§Ã£o escolhida em um registrador s4 para uso futuro 
+    	move $s4, $t0		# guardar a opção escolhida em um registrador s4 para uso futuro 
     
   	li $t1, 1
   	li $t2, 2
@@ -76,9 +76,7 @@ main_loop:
   	li $t4, 4
   	li $t5, 5
   
-
-	# switch (1 = inserir, 2 = remover, 3 = buscar, 4 = ver arvore, 5 = sair)
-
+	# switch (1 = Insercao, 2 = Remocao, 3 = Busca, 4 = Visualizacao, 5 = Fim)
 	beq $t0, $t1, insert
 	beq $t0, $t2, remove
 	beq $t0, $t3, search
@@ -89,15 +87,15 @@ main_loop:
 			
 read_str:
    	li $v0, 8			# Ler uma string vinda do teclado	
-   	la $a0, binary_number 		# A string digitada fica salva em binary_number . O $a0 tem o endereÃ§o base para a string alocada dinamicamente.
+   	la $a0, binary_number 		# A string digitada fica salva em binary_number . O $a0 tem o endereço base para a string alocada dinamicamente.
    	li $a1, 16		
     	syscall
 
-    	move $t0, $a0 			# Guardando o numero binario em um registrador para usÃ¡-lo durante o processo de verificacao
+    	move $t0, $a0 			# Guardando o numero binario em um registrador para usá-lo durante o processo de verificacao
     
     
-    	lb $t1, ($t0) 			# Carregando a primeira posiÃ§Ã£o da string do numero binario em t1
-    	lb $t2, 1($t0)			# Carregando a proxima posiÃ§Ã£o da string do numero binario em t2
+    	lb $t1, ($t0) 			# Carregando a primeira posição da string do numero binario em t1
+    	lb $t2, 1($t0)			# Carregando a proxima posição da string do numero binario em t2
     
 	subi $t3, $t1, 45		# if (string[i] == "-") t3 = 0
     	subi $t4, $t2, 49		# if (string[i + 1] == "1") t4 = 0
@@ -115,21 +113,21 @@ str_checker_loop:
     blt $t1, 48, print_str_err		# if( string[i] < 48 ) imprima a mensagem de erro 
     
     
-    addi $t0, $t0, 1			# Some 1 ao endereÃ§o base da string para ter acesso ao proximo caractere
+    addi $t0, $t0, 1			# Some 1 ao endereço base da string para ter acesso ao proximo caractere
     lb $t1, ($t0)			# Carregue o proximo caractere da string 
     j str_checker_loop
 
 
-TenToZero:			# TenToZero Ã© a substituiÃ§Ã£o do 10 == ENTER por mais um \0 
+TenToZero:			# TenToZero é a substituição do 10 == ENTER por mais um \0 
 	
 	move $t1, $zero 
-	sb $t1, ($t0) 		# O endereÃ§o que contem o 10 == ENTER , recebe o valor zero
+	sb $t1, ($t0) 		# O endereço que contem o 10 == ENTER , recebe o valor zero
 
 		
 end_checker_loop:
 
-	move $s0, $a0 	# No caso de o numero digitado ser vÃ¡lido, ele serÃ¡ salvo em um registrador s0				
-		      	# AtÃ© aqui o endereÃ§o que Ã© guardado por a0, tem seu conteudo alterado 
+	move $s0, $a0 	# No caso de o numero digitado ser válido, ele será salvo em um registrador s0				
+		      	# Até aqui o endereço que é guardado por a0, tem seu conteudo alterado 
 		    
 	jr $ra
 
@@ -176,12 +174,12 @@ create_node:
 		
 	beq $a1, 2, fim_create_node_dir	#Se $a1 == 2 cria-se a raiz
 	beq $a1, 1, create_node_dir  	#Se $a0 == 1 insere v0 no filho da direita se nao na esquerda
-	sw $v0, 0($s0)			# salva o conteudo de v0 no nÃ³ da esquerda
+	sw $v0, 0($s0)			# salva o conteudo de v0 no nó da esquerda
 		
 	j fim_create_node_dir
 
 create_node_dir:		
-	sw $v0, 4($s0)		# salva o conteudo de v0 no nÃ³ da direita
+	sw $v0, 4($s0)		# salva o conteudo de v0 no nó da direita
 
 fim_create_node_dir:
 		
@@ -196,30 +194,13 @@ repeated_node:
 	la $a0, repeated_insertion_str
 	syscall
 
-   	j main_loop	
-create_node:	
-		subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
-		sw $ra, 0($sp)
-		
-		li $v0, 9			# alocar 12 (4*3) bytes na memoria
-		li $a0, 12
-		syscall
-		
-		li $t0, 1
-		sw $zero, 0($v0)		# node->child_left = NULL;
-		sw $zero, 4($v0)		# node->child_right = NULL;
-		sw $t0, 8($v0)			# node->terminator = TRUE;
-		
-		lw $ra, 0($sp)
-		addi $sp, $sp, 4
+insert:		
 	
-		jr $ra		
-insert:
    	li $v0, 4 
    	la $a0, enter_insertion_str
 	syscall
 
-
+	jal read_str
 
 	move $t0, $s0	
 	move $t1, $s1
@@ -229,16 +210,16 @@ insert:
 	
 	jal search_repeated
 	beq $v0, 1, repeated_node		
-	bgezal $s0, insert_loop #Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nÃ³ valido
+	bgezal $s0, insert_loop #Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
 	
 	j insert
 
 
 insert_loop:	
-										
+															
 																
 	lb $t2, 0($t0)			
-	beq $t2, $zero, end_insert_loop # condiÃ§Ã£o de parada do loop de insercao
+	beq $t2, $zero, end_insert_loop # condição de parada do loop de insercao
 	
 	
 	li $t3 , 48			# 48 == 0 em ascII
@@ -249,11 +230,14 @@ insert_loop:
 	
 	seq $t5, $t4, $zero		# se node_right == NULL, t5 = 1, do contrario, t5 = 0
 	subi $t5, $t5, 1		# t0 = t0 - 1
-
-	move $a0, $t1			# Passando o nÃ³ atual como parametro em $a0
-	li $a1, 1			# Passando 1 como argumento para que seja criado um nÃ³ a direita do nÃ³ atual
+	
+	
+	move $a0, $t1			# Passando o nó atual como parametro em $a0
+	li $a1, 1			# Passando 1 como argumento para que seja criado um nó a direita do nó atual
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 
+			
+	
 	lw $t1, 4($t1)
 	
 	addi $t0, $t0, 1		# Acessar o proximo indice do numero (isto eh, i++)
@@ -268,7 +252,7 @@ insert_left:
 	seq $t5, $t4, $zero		# Se node_left == NULL, t4 = 1, do contrario, t4 = 0
 	subi $t5, $t5, 1		# t0 = t0 - 1
 	
-	move $a0, $t1			# Passando o nÃ³ atual como parametro em $a0
+	move $a0, $t1			# Passando o nó atual como parametro em $a0
 	li $a1, 0			# Passando 0 como argumento para que seja criado um no a esquerda do no atual
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 	
@@ -284,7 +268,7 @@ end_insert_loop:
 	syscall
 		
 	li $t5, 1 			# O 1 representa um true booleano
-	sw $t5, 8($t1) 			# O true serÃ¡ atribuÃ­do ao terminador no ultimo nÃ³ que serÃ¡ inserido
+	sw $t5, 8($t1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
 	
 	j insert			# retorne para a insercao , para que um novo valor possa ser inserido
 
@@ -293,8 +277,8 @@ search_repeated:
 	move $t4, $t1			# raiz da arvore
 	lb $t5, 0($t3)			# Guardando o caractere atual do numero binario em t2
 	
-	beq $t5, 48, node_left_sr	# Se t2 == 48 (caractere 0 em ascII) , vÃ¡ para a o no da esquerda
-	beq $t5, 49, node_right_sr	# Se t2 == 49 (caractere 1 em ascII), vÃ¡ para a o no da direita
+	beq $t5, 48, node_left_sr	# Se t2 == 48 (caractere 0 em ascII) , vá para a o no da esquerda
+	beq $t5, 49, node_right_sr	# Se t2 == 49 (caractere 1 em ascII), vá para a o no da direita
 	
 node_left_sr:
 	lw $t5, 0($t4)			# Carregue o conteudo de node_esq para verificar se ele eh NULL
@@ -313,9 +297,9 @@ node_right_sr:
 search_loop_sr:		# BUSCAR CHAVE REPETIDA ANTES DA INSERCAO
 	li $t5, 48			# t3 = 48 (caractere 0 em ascII)
 	lb $t6, 1($t3)			# Carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, 
-					# para verificar se o proximo caracter Ã© o final da string 
+					# para verificar se o proximo caracter é o final da string 
 	
-	beq $t6, $zero, term_check_sr	# Condicao de parada. VerificaÃ§Ã£o do terminador
+	beq $t6, $zero, term_check_sr	# Condicao de parada. Verificação do terminador
 	beq $t6, $t5, search_left_sr	# Se num[i] == 0, navegue ao filho esquerdo
 	
 	
@@ -361,19 +345,19 @@ search:
    	
    	blt $s0, $zero, search		# Se string[i] == \0, retorne ao inicio da busca
    	
-   	move $t0, $s0			# t0 guarda temporariamente o endereÃ§o para a string. 
-	move $t1, $s1			# O mesmo ocorre com t1, que agora recebe o endereÃ§o para a raiz da arvore
-   	move $t9, $s2			# t9 guarda temporariamente o endereÃ§o para a string do caminho percorrido
+   	move $t0, $s0			# t0 guarda temporariamente o endereço para a string. 
+	move $t1, $s1			# O mesmo ocorre com t1, que agora recebe o endereço para a raiz da arvore
+   	move $t9, $s2			# t9 guarda temporariamente o endereço para a string do caminho percorrido
 
 
-	li $t6, 50			# Colocando o valor 2 ( 50 == 2 em ascII ) na primeira posiÃ§Ã£o da string do caminho percorrido,
+	li $t6, 50			# Colocando o valor 2 ( 50 == 2 em ascII ) na primeira posição da string do caminho percorrido,
 	sb $t6, 0($t9)			# para indicar que passamos pela raiz
-	addi $t9, $t9, 1		# Acessando a proxima posiÃ§Ã£o da string do caminho percorrido
+	addi $t9, $t9, 1		# Acessando a proxima posição da string do caminho percorrido
 
 	lb $t2, 0($t0)			# Guardando o caractere atual do numero binario em t2
 	
-	beq $t2, 48, node_left		# Se t2 == 48 (caractere 0 em ascII) , vÃ¡ para a o no da esquerda
-	beq $t2, 49, node_right		# Se t2 == 49 (caractere 1 em ascII), vÃ¡ para a o no da direita
+	beq $t2, 48, node_left		# Se t2 == 48 (caractere 0 em ascII) , vá para a o no da esquerda
+	beq $t2, 49, node_right		# Se t2 == 49 (caractere 1 em ascII), vá para a o no da direita
 	j search			
 
 node_left:
@@ -407,9 +391,9 @@ search_loop:
 	
 	li $t3, 48			# t3 = 48 (caractere 0 em ascII)
 	lb $t5, 1($t0)			# Carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, 
-					# para verificar se o proximo caracter Ã© o final da string 
+					# para verificar se o proximo caracter é o final da string 
 	
-	beq $t5, $zero, terminator_check# Condicao de parada. VerificaÃ§Ã£o do terminador
+	beq $t5, $zero, terminator_check# Condicao de parada. Verificação do terminador
 	beq $t5, $t3, search_left	# Se num[i] == 0, navegue ao filho esquerdo
 	
 	jal right_path			# Processo que atribui caractere 1 para a posicao atual da string do caminho percorrido
@@ -466,13 +450,13 @@ end_search_loop:
 	jal path_print			# Processo para a impressao da string que contem o caminho percorrido
 	
 	li $v0, 1
-	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a funÃ§Ã£o correta
+	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
 	beq $s4, 3, search
 	
 	
 not_found:
 	
-	jal end_path			# Coloca uma flag na ultima posiÃ§Ã£o da string 
+	jal end_path			# Coloca uma flag na ultima posição da string 
 					# para marcar o fim do caminho 
 
 														
@@ -492,7 +476,7 @@ not_found:
 	jal path_print 			
 
 	li $v0, 0
-	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a funÃ§Ã£o correta
+	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
 	beq $s4, 3, search
 
 
@@ -516,21 +500,21 @@ path_print_loop:
 	
 left_path:
 	
-	li $t6, 48			# Guardando o valor 0, que indica que fui pra esquerda , na posiÃ§Ã£o atual de t9
+	li $t6, 48			# Guardando o valor 0, que indica que fui pra esquerda , na posição atual de t9
 	sb $t6, ($t9)			
 	addi $t9, $t9, 1
 	jr $ra
 
 right_path:
 
-	li $t6, 49			# Guardando o valor 1, que indica que fui pra direita , na posiÃ§Ã£o atual de t9
+	li $t6, 49			# Guardando o valor 1, que indica que fui pra direita , na posição atual de t9
 	sb $t6, ($t9)			
 	addi $t9, $t9, 1
 	jr $ra
 
 end_path:
 
-	li $t6, 51			# flag que serÃ¡ armazenada na ultima posiÃ§Ã£o da string( 51 == 3 em ascII )
+	li $t6, 51			# flag que será armazenada na ultima posição da string( 51 == 3 em ascII )
 	sb $t6, ($t9)
 	jr $ra
 
@@ -577,7 +561,7 @@ remove:
 	la $a0, enter_removal_str
 	syscall
 
-	jal read_str			# Verifique se o binario digitado Ã© valido, invalido ou -1
+	jal read_str			# Verifique se o binario digitado é valido, invalido ou -1
 	
 	move $t0, $s0			# Numero a ser removido
 	move $t1, $s1			# Raiz da arvore
@@ -588,7 +572,7 @@ remove:
 	
 	li $t6, 50			
 	sb $t6, 0($t9)			# Guardando o valor 2 na string do caminho percorrido para indicar que passamos pela raiz
-	addi $t9, $t9, 1		# Ir para a proxima posiÃ§Ã£o da string do caminho percorrido
+	addi $t9, $t9, 1		# Ir para a proxima posição da string do caminho percorrido
 	
 	bgezal $s0, remove_loop		# Se o numero eh valido, entre no loop de remocao
 	j remove
@@ -689,10 +673,8 @@ null_right:
 	j end_remove_loop
 
 print_tree:
-	j main_loop
-	
+	 	j main_loop
 		# TODO
-
 
 quit:
 	  li $v0, 10
