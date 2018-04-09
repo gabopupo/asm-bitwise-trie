@@ -626,15 +626,14 @@ null_right:
 
 
 print_node:
-	#move $t0, $s0
 	
-	move $t4, $a0
+	move $t5, $t2
 
 	li $v0, 11
 	li $a0, 40		# 40 == ( em ascII )
 	syscall
 
-	lw $t3, 12($t4)
+	lw $t3, 12($t5)
 	
 	beq $t3, 2, print_root_node
 
@@ -646,13 +645,19 @@ print_node:
 	la $a0, comma_str
 	syscall
 
-	lw $t3, 8($t4)
+	lw $t3, 8($t5)
 	
 	beq $t3, 0, print_NT
 	beq $t3, 1, print_T
 	
-	
-	
+print_root_node:
+
+	li $v0, 4
+	la $a0, raiz_str
+	syscall
+
+
+	j print_NT	
 	
 	
 print_NT:			
@@ -679,18 +684,11 @@ print_T:
 
 	j node_address
 
-print_root_node:
 
-	li $v0, 4
-	la $a0, raiz_str
-	syscall
-
-
-	j node_address
 
 node_address:
 
-	lw $t3, 0($t4)
+	lw $t3, 0($t5)
 	li $v0, 1
 	la $a0, ($t3)
 	syscall
@@ -699,7 +697,7 @@ node_address:
 	la $a0, comma_str
 	syscall
 	
-	lw $t3, 4($t4)
+	lw $t3, 4($t5)
 	li $v0, 1
 	la $a0, ($t3)
 	syscall
@@ -727,7 +725,7 @@ print_tree:
 	li $t5, -1
 	
 loop_visu:
-	lw $t2, 0($t0) #t2 recebe o primeiro no da fila
+	lw $t2, 0($t0) #t2 recebe o primeiro no da fila	
 	lw $t3, 0($t2) #t3 recebe o filho da esquerda
 	lw $t4, 4($t2) #t4 recebe o filho da direita
 	lw $t6, 16($t2) #t6 recebe o nivel do nó atual
