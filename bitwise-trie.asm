@@ -764,7 +764,7 @@ visu_mudar_nivel:
 	syscall
 	
 visu_impressao:
-	lw $a0, ($t2)
+	la $a0, ($t2)
 	jal print_node # falta passar o no atual que esta em t2
 	
 	subi $t0, $t0, 4 #t0 vai para o proximo no da fila
