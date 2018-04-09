@@ -40,8 +40,9 @@ dir_str:			.asciiz ", dir"
 raiz_str:			.asciiz "raiz"
 
 endl_str:			.asciiz "\n"  #quebra de linha
-
-
+comma_str:			.asciiz ", "
+NT_str:				.asciiz "NT"
+T_str:				.asciiz "T"
 
 
 	.text
@@ -51,7 +52,18 @@ main:
 	li $a1, 2			# Passando 2 como argumento em a1 para que o nó raiz seja criado
 	jal create_node			# Criar o node raiz da arvore
 	move $s1, $v0			# Salvar a raiz. Seu endereço está agora na heap
+
 	
+	li $t0, 2
+	li $t1, 0			
+	li $t2, 0		
+
+	
+	sw $t2, 8($s1)		# setando o terminador da raiz como 0
+	sw $t0, 12($s1)		# setando o node_val da raiz como 2, para indicar que o nó é raiz. 
+	sw $t1, 16($s1)		# setando o nivel da raiz como 0
+				
+
 	li $v0, 9			# Alocar 16 (4*4) bytes na memoria
 	li $a0, 16
 	syscall
@@ -101,6 +113,7 @@ read_str:
     	subi $t4, $t2, 49		# if (string[i + 1] == "1") t4 = 0
    	 		
     
+
 	beq $t3, $t4, print_return	# if (t3 == t4) volte para o menu
 					# Se o numero digitado for exatamente o -1 , volte para o menu
 	
@@ -151,10 +164,12 @@ print_return:		#imprime "Retornando ao menu.".
    	j main_loop	
 
 #	struct node_trie { t1 = endereco dessa struct
-#		node_trie *child_left;			0(t1)
-#		node_trie *child_right;			4(t1)
-#		int terminator				8(t1)
-#	}
+#		node_trie *child_left;  0(t1)
+#		node_trie *child_right; 4(t1)
+#		int terminator 		8(t1)
+#		int node_val	 	12(t1) --> digito do no 
+#	}	int node_level		16(t1) --> nivel do no
+
 
 create_node:	
 			
@@ -163,23 +178,41 @@ create_node:
 	sw $s0, 4($sp)
 		
 	move $s0, $a0
-	li $v0, 9			# alocar 12 (4*3) bytes na memoria
-	li $a0, 12
+
+	li $v0, 9			# alocar 20 (4*5) bytes na memoria
+	li $a0, 20
 	syscall
+	
 		
-	li $t9, 0			
+	li $t8, 0	
+	
 	sw $zero, 0($v0)		# node->child_left = NULL;
 	sw $zero, 4($v0)		# node->child_right = NULL;
-	sw $t9, 8($v0)			# node->terminator = FALSE;
-		
-	beq $a1, 2, fim_create_node_dir	#Se $a1 == 2 cria-se a raiz
-	beq $a1, 1, create_node_dir  	#Se $a0 == 1 insere v0 no filho da direita se nao na esquerda
-	sw $v0, 0($s0)			# salva o conteudo de v0 no nó da esquerda
-		
+	sw $t8, 8($v0)			# node->terminator = FALSE;
+	
+					
+	move $t9, $a2	
+							
+	beq $a1, 2, fim_create_node_dir	# Se $a1 == 2 cria-se a raiz
+	beq $a1, 1, create_node_dir  	# Se $a0 == 1 insere v0 no filho da direita . Senao, na esquerda
+	
+	li $t8, 0
+	sw $t8, 12($v0)
+	sw $t9, 16($v0)	
+	
+	sw $v0, 0($s0)			# Salva o conteudo de v0 no nó da esquerda
+					# linka o nó atual com o novo no 
+	
 	j fim_create_node_dir
 
 create_node_dir:		
+	li $t8, 1
+	sw $t8, 12($v0)	
+	sw $t9, 16($v0)
+	
 	sw $v0, 4($s0)		# salva o conteudo de v0 no nó da direita
+	
+
 
 fim_create_node_dir:		# encerrar o procedimento de insercao (se estiver num filho direito)
 		
@@ -204,13 +237,15 @@ insert:
 
 	move $t0, $s0	
 	move $t1, $s1
-	
-	li $t2, 1		#setando o terminador da raiz como 1
-	sw $t2, 8($t1)
-	
+
+
+			
+	li $t6, 1		# t6 é usado para setar os niveis para os nós							
+
 	jal search_repeated
 	beq $v0, 1, repeated_node		
 	bgezal $s0, insert_loop #Se o valor contido em s0 for maior ou igual a zero , pode-se criar um nó valido
+
 	
 	j insert
 
@@ -231,22 +266,24 @@ insert_loop:
 	seq $t5, $t4, $zero		# se node_right == NULL, t5 = 1, do contrario, t5 = 0
 	subi $t5, $t5, 1		# t0 = t0 - 1
 	
-	
-	move $a0, $t1			# Passando o nó atual como parametro em $a0
-	li $a1, 1			# Passando 1 como argumento para que seja criado um nó a direita do nó atual
-	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 
-			
-	
+	move $a0, $t1			# Passando o nó atual como parametro em $a0	
+	li $a1, 1			# Passando 1 como argumento para que seja criado um nó a direita do nó atual
+	la $a2, ($t6)
+	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
+									
 	lw $t1, 4($t1)
 	
-	addi $t0, $t0, 1		# Acessar o proximo indice do numero (isto eh, i++)
+	addi $t0, $t0, 1		# Acessar a proxima posição da string do numero binario
+	addi $t6, $t6, 1
+
 
 	j insert_loop
 	
 
 
 insert_left:
+
 	
 	lw $t4, 0($t1)			# Carregue o conteudo de node_left
 	seq $t5, $t4, $zero		# Se node_left == NULL, t4 = 1, do contrario, t4 = 0
@@ -254,15 +291,22 @@ insert_left:
 	
 	move $a0, $t1			# Passando o nó atual como parametro em $a0
 	li $a1, 0			# Passando 0 como argumento para que seja criado um no a esquerda do no atual
+
+	la $a2, ($t6)
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
+
 	
 	lw $t1, 0($t1)
+	
 	addi $t0, $t0, 1		# Acessar o proximo indice do numero (isto eh, i++)
+	addi $t6, $t6, 1
+
 	
 	j insert_loop			# volte ao loop de insercao
 
 		
 end_insert_loop:
+
 	li $v0, 4			# print "Numero inserido com sucesso"
 	la $a0, succeeded_insertion_str
 	syscall
@@ -270,6 +314,7 @@ end_insert_loop:
 	li $t5, 1 			# O 1 representa um true booleano
 	sw $t5, 8($t1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
 	
+
 	j insert			# retorne para a insercao , para que um novo valor possa ser inserido
 
 search_repeated:
@@ -342,7 +387,7 @@ search:
    	syscall
 
    	jal read_str			# Verifique se o numero digitado eh valido (binario)
-   	
+
    	blt $s0, $zero, search		# Se string[i] == \0, retorne ao inicio da busca
    	
    	move $t0, $s0			# t0 guarda temporariamente o endereço para a string. 
@@ -419,7 +464,9 @@ search_left:
 	
 	addi $t0, $t0, 1		# navegue para o proximo caractere do numero binario
 	lw $t1, 0($t1)			# navegue para o endereco do node filho da esquerda
+
 	j search_loop			# retorne para o loop de busca
+
 
 
 terminator_check:
@@ -448,6 +495,9 @@ end_search_loop:
 	syscall
 	
 	jal path_print			# Processo para a impressao da string que contem o caminho percorrido
+
+	j search			# retorne para o inicio da busca
+
 	
 	li $v0, 1
 	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
@@ -457,10 +507,10 @@ end_search_loop:
 not_found:
 	
 	jal end_path			# Coloca uma flag na ultima posição da string 
-					# para marcar o fim do caminho 
+					          # para marcar o fim do caminho 
 
 														
-	li $v0, 4			# print "Chave nao encontrada"
+	li $v0, 4			    # print "Chave nao encontrada"
 	la $a0, not_found_key_str
 	syscall
 	
@@ -472,10 +522,9 @@ not_found:
 	la $a0, endl_str
 	syscall	
 	
-		
+
 	jal path_print 			# IMPRIMIR CAMINHO FEITO PARA ENCONTRAR A CHAVE
 
-	li $v0, 0
 	beq $s4, 2, remove		# Usa o conteudo de s4 setado no inicio do programa para retornar para a função correta
 	beq $s4, 3, search
 
@@ -491,7 +540,6 @@ path_print:
 path_print_loop:
 	
 	lb $t0, ($t9)
-
 					# Imprimindo o caminho de acordo com os valores contidos na string armazenada em t9
 	beq $t0, 48, print_esq_str	# Se a posicao atual da string tiver o valor 0, imprima "esq, "
 	beq $t0, 49, print_dir_str	# Se a posicao atual da string tiver o valor 1, imprima "dir, "	
@@ -519,6 +567,7 @@ end_path:
 	jr $ra
 
 
+
 print_root:				# imprimir "raiz" no caminho
 	li $v0, 4			
 	la $a0, raiz_str
@@ -526,12 +575,14 @@ print_root:				# imprimir "raiz" no caminho
 	
 	addi $t9, $t9, 1
 	
+
 	j path_print_loop
 			
 print_esq_str:				# imprimir "esq" no caminho
 	li $v0, 4
 	la $a0, esq_str
 	syscall
+	
 	
 	addi $t9, $t9, 1
 	
@@ -541,6 +592,7 @@ print_dir_str:				# imprimir "dir" no caminho
 	li $v0, 4
 	la $a0, dir_str
 	syscall
+	
 	
 	addi $t9, $t9, 1
 	
@@ -593,11 +645,11 @@ remove_loop:
 	
 	lw $t3, 8($t1)			# Guarde terminator do node atual
 
+
 	lb $t4, 1($t0)			# Carregue num[i+1]
 	beq $t4, $zero, remove_check	# Remova o numero, checando o ultimo terminador TRUE lido
 	
 	addi $t0, $t0, 1
-	#lw $t1, 4($t1)
 	
 	beq $t3, 0, remove_loop		# Guarde o terminador apenas se ele for TRUE para o node atual
 	beq $t3, 1, store_terminator	
@@ -619,7 +671,7 @@ remove_left:
 	beq $t4, $zero, remove_check	# Remova o numero, checando o ultimo terminador TRUE lido
 	
 	addi $t0, $t0, 1
-	#lw $t1, 0($t1)
+	
 	beq $t3, 0, remove_loop		# Guarde o terminador se ele for TRUE para o node atual
 	
 store_terminator:
@@ -672,11 +724,172 @@ null_right:
 	sw $zero, 4($a0)		# remova o filho direito do ultimo node de terminador TRUE lido
 	j end_remove_loop
 
-print_tree:
-	 	j main_loop
-		# TODO
 
-quit:					# encerre o programa
+print_tree:
+	#s1 guarda raiz
+	subi $sp, $sp, 4		# armazenar o endereco de retorno na pilha
+	sw $ra, 0($sp)
+	
+	move $t1, $sp #t1 guarda a posição da stack antes da implementação da fila
+	
+	subi $sp, $sp, 4
+	sw $s1, 0($sp) #enfileira o nó raiz
+	move $t0, $sp #t0 guarda inicio da fila
+	li $t5, -1
+	
+loop_visu:
+	lw $t2, 0($t0) #t2 recebe o primeiro no da fila	
+	lw $t3, 0($t2) #t3 recebe o filho da esquerda
+	lw $t4, 4($t2) #t4 recebe o filho da direita
+	lw $t6, 16($t2) #t6 recebe o nivel do nó atual
+	
+	
+	beq $t3, 0, visu_enfileirar_dir #pular se t3 é NULL
+	subi $sp, $sp, 4
+	sw $t3, 0($sp) #enfileira filho da esquerda
+	
+visu_enfileirar_dir:
+	beq $t4, 0, visu_mudar_nivel #pular se t4 é NULL
+	subi $sp, $sp, 4
+	sw $t4, 0($sp) #enfileira filho da direita
+
+		
+visu_mudar_nivel:
+	beq $t5, $t6, visu_impressao
+	addi $t5, $t5, 1 #acrescenta um no nivel atual
+	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	#imprimir N
+	li $v0, 11
+	li $a0, 78
+	syscall
+	
+	#imprimir o nivel
+	li $v0, 1
+	la $a0, ($t5)
+	syscall
+	
+	#imprimir o espaço
+	li $v0, 11
+	li $a0, 32
+	syscall
+	
+visu_impressao:
+	la $a0, ($t2)
+	jal print_node # falta passar o no atual que esta em t2
+	
+	subi $t0, $t0, 4 #t0 vai para o proximo no da fila
+
+
+	
+	bge $t0, $sp, loop_visu
+	
+	move $sp, $t1 #apaga a fila
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	
+	li $v0, 4
+	la $a0, endl_str
+	syscall
+	
+	
+	j main_loop
+	
+print_node:
+	
+	move $t9, $a0 # agora estou passando o nó atual 
+
+	li $v0, 11
+	li $a0, 40		# 40 == ( em ascII )
+	syscall
+
+	lw $t3, 12($t9)
+	
+	beq $t3, 2, print_root_node
+
+	li $v0, 1
+	la $a0, ($t3)
+	syscall
+	
+	li $v0, 4
+	la $a0, comma_str
+	syscall
+
+	lw $t3, 8($t9)
+	
+	beq $t3, 0, print_NT
+	beq $t3, 1, print_T
+	
+	
+print_root_node:
+
+	li $v0, 4
+	la $a0, raiz_str
+	syscall
+
+
+	j print_NT	
+	
+	
+print_NT:			
+	li $v0, 4
+	la $a0, NT_str
+	syscall
+	
+	li $v0, 4
+	la $a0, comma_str
+	syscall
+	
+	j node_address
+
+print_T:			
+	li $v0, 4
+	la $a0, T_str
+	syscall
+	
+	li $v0, 4
+	la $a0, comma_str
+	syscall
+
+	
+
+	j node_address
+
+node_address:
+
+	lw $t3, 0($t9) # impressao do endereço do no esquerdo
+	li $v0, 1
+	la $a0, ($t3)
+	syscall
+	
+	li $v0, 4
+	la $a0, comma_str
+	syscall
+	
+	lw $t3, 4($t9)	# impressao do endereço do no direito
+	li $v0, 1
+	la $a0, ($t3)
+	syscall
+
+	li $v0, 11
+	li $a0, 41	# 41 == ) ascII
+	syscall
+	
+	
+	jr $ra
+
+	
+		
+			
+					
+quit:
 	  li $v0, 10
 	  syscall
-		
+	
+	    	
+	
+
