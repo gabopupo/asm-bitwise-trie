@@ -60,10 +60,7 @@ main:
 	sw $t2, 8($s1)		# setando o terminador da raiz como 0
 	sw $t0, 12($s1)		# setando o node_val da raiz como 2, para indicar que o nó é raiz. 
 	sw $t1, 16($s1)		# setando o nivel da raiz como 0
-		
-	la $a0, ($s1)						
-	jal print_node
-		
+				
 				
 	li $v0, 9			# Alocar 16 (4*4) bytes na memoria
 	li $a0, 16
@@ -187,18 +184,30 @@ create_node:
 	sw $zero, 0($v0)		# node->child_left = NULL;
 	sw $zero, 4($v0)		# node->child_right = NULL;
 	sw $t8, 8($v0)			# node->terminator = FALSE;
-	sw $t9, 12($v0)			# node->node_val = -1
-	sw $t9, 16($v0)			# node->node_level = -1
-			
-			
+	
+					
+	move $t9, $a2	
+							
 	beq $a1, 2, fim_create_node_dir	# Se $a1 == 2 cria-se a raiz
 	beq $a1, 1, create_node_dir  	# Se $a0 == 1 insere v0 no filho da direita . Senao, na esquerda
+	
+	li $t8, 0
+	sw $t8, 12($v0)
+	sw $t9, 16($v0)	
+	
 	sw $v0, 0($s0)			# Salva o conteudo de v0 no nó da esquerda
-		
+					# linka o nó atual com o novo no 
+	
 	j fim_create_node_dir
 
 create_node_dir:		
+	li $t8, 1
+	sw $t8, 12($v0)	
+	sw $t9, 16($v0)
+	
 	sw $v0, 4($s0)		# salva o conteudo de v0 no nó da direita
+	
+
 
 fim_create_node_dir:
 		
@@ -220,8 +229,6 @@ insert:
 
 	move $t0, $s0	
 	move $t1, $s1
-	
-	
 
 			
 	li $t6, 1		# t6 é usado para setar os niveis para os nós							
@@ -240,7 +247,6 @@ insert_loop:
 	li $t3 , 48			# 48 == 0 em ascII
 	beq $t2, $t3, insert_left	# se num[i] == 0, inserir a esquerda da raiz
 
-
 	lw $t4, 4($t1)			# carregue o conteudo de node_right
 	
 	
@@ -248,28 +254,15 @@ insert_loop:
 	subi $t5, $t5, 1		# t0 = t0 - 1
 	
 	
-	move $a0, $t1			# Passando o nó atual como parametro em $a0
+	move $a0, $t1			# Passando o nó atual como parametro em $a0	
 	li $a1, 1			# Passando 1 como argumento para que seja criado um nó a direita do nó atual
+	la $a2, ($t6)
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
-
-	la $a0, ($t1)						
-	jal print_node
-
-	sw $t6, 16($t1)			# Setando o valor do nivel do no
-	addi $t6, $t6, 1
-	
-	la $a0, ($t1)						
-	jal print_node	
-				
-	li $t3, 1
-	sw $t3, 12($t1)			# guardando 1 em node_val do no atual  
-	
-	la $a0, ($t1)						
-	jal print_node
-																					
+									
 	lw $t1, 4($t1)
 	
 	addi $t0, $t0, 1		# Acessar a proxima posição da string do numero binario
+	addi $t6, $t6, 1
 
 	j insert_loop
 	
@@ -284,32 +277,19 @@ insert_left:
 	
 	move $a0, $t1			# Passando o nó atual como parametro em $a0
 	li $a1, 0			# Passando 0 como argumento para que seja criado um no a esquerda do no atual
+	la $a2, ($t6)
 	bgezal $t5, create_node		# Se t0 == 0, node nao existe entao crie. Se t0 < 0, node existe.
 
-	la $a0, ($t1)						
-	jal print_node
-
-	sw $t6, 16($t1)			# Setando o valor do nivel do no
-	addi $t6, $t6, 1
-	
-	la $a0, ($t1)						
-	jal print_node
-	
-	li $t3, 0
-	sw $t3, 12($t1)			# guardando 0 em node_val do no atual  
-	
-	la $a0, ($t1)						
-	jal print_node
 	
 	lw $t1, 0($t1)
 	
 	addi $t0, $t0, 1		# Acessar o proximo indice do numero (isto eh, i++)
+	addi $t6, $t6, 1
 	
 	j insert_loop			# volte ao loop de insercao
 
 		
 end_insert_loop:
-	
 	
 	
 	
@@ -319,13 +299,6 @@ end_insert_loop:
 		
 	li $t5, 1 			# O 1 representa um true booleano
 	sw $t5, 8($t1) 			# O true será atribuído ao terminador no ultimo nó que será inserido
-	sw $t6, 16($t1)			# Setando o nivel do ultimo nó inserido
-	
-	la $a0, ($s1)						
-	jal print_node
-	
-	la $a0, ($t1)						
-	jal print_node
 	
 	
 	j insert			# retorne para a insercao , para que um novo valor possa ser inserido
@@ -338,7 +311,6 @@ search:
 
    	jal read_str			# Verifique se o numero digitado eh valido (binario)
 
-#start_search:  --> pode ser util quando tiver q verificar se a chave eh repetida
    	blt $s0, $zero, search		# Se string[i] == \0, retorne ao inicio da busca
    	
    	move $t0, $s0			# t0 guarda temporariamente o endereço para a string. 
@@ -717,25 +689,18 @@ visu_mudar_nivel:
 	
 visu_impressao:
 	la $a0, ($t2)
-	
-	#lw $t0, 12($a0)
-	#li $v0, 1
-	#la $a0, ($t0)
-	#syscall
-	
-	
 	jal print_node # falta passar o no atual que esta em t2
 	
 	subi $t0, $t0, 4 #t0 vai para o proximo no da fila
 
 	
-	bne $t0, $sp, loop_visu
+	bge $t0, $sp, loop_visu
+	
 	move $sp, $t1 #apaga a fila
 	
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	
-	#jr $ra	
 	li $v0, 4
 	la $a0, endl_str
 	syscall
@@ -746,11 +711,6 @@ visu_impressao:
 print_node:
 	
 	move $t9, $a0 # agora estou passando o nó atual 
-
-	#lw $t0, 12($t5)
-	#li $v0, 1
-	#la $a0, ($t0)
-	#syscall
 
 	li $v0, 11
 	li $a0, 40		# 40 == ( em ascII )
@@ -772,6 +732,7 @@ print_node:
 	
 	beq $t3, 0, print_NT
 	beq $t3, 1, print_T
+	
 	
 print_root_node:
 
@@ -826,6 +787,7 @@ node_address:
 	li $v0, 11
 	li $a0, 41	# 41 == ) ascII
 	syscall
+	
 	
 	jr $ra
 
