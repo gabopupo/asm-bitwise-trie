@@ -1,19 +1,19 @@
-# =====================================================================================
+# =============================================================================================================
 #		Trabalho 1 de Organizacao de Computadores Digitais I
 #
 #         Filename:  T1.asm 
 #  	  Description:  Implementacao de uma Arvore de Busca Digital Binaria 
 #
-#         Nome:	Eduardo Zaboto Mirolli			No USP:	9778501
-#	  Participacao:	
+#         Nome:	Eduardo Zaboto Mirolli								No USP:	9778501
+#	  Participacao:	Leitura e checagem de strings; inserção; busca e; visualização da arvore
 #
-#         Nome:	Paulo Henrique Bodnarchuki da Cruz	No USP:	9790944
-#	  Participacao:
+#         Nome:	Paulo Henrique Bodnarchuki da Cruz						No USP:	9790944
+#	  Participacao: Busca; Remoção: Visualização da arvore e; Debug
 #
-#         Nome:	Gabriel Romualdo Silveira Pupo 		No USP: 9896250
-#	  Participacao:
+#         Nome:	Gabriel Romualdo Silveira Pupo 							No USP: 9896250
+#	  Participacao: Inserção; Busca; Busca por chaves repetidas e; remoação
 #
-# =====================================================================================
+# ===============================================================================================================
 
 	.data
 	.align 0
@@ -341,11 +341,11 @@ node_right_sr:
 	
 search_loop_sr:		# BUSCAR CHAVE REPETIDA ANTES DA INSERCAO
 	li $t5, 48			# t3 = 48 (caractere 0 em ascII)
-	lb $t6, 1($t3)			# Carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, 
+	lb $t9, 1($t3)			# Carregue o conteudo do proximo byte de t0( ou seja, num[i]) em t5, 
 					# para verificar se o proximo caracter é o final da string 
 	
-	beq $t6, $zero, term_check_sr	# Condicao de parada. Verificação do terminador
-	beq $t6, $t5, search_left_sr	# Se num[i] == 0, navegue ao filho esquerdo
+	beq $t9, $zero, term_check_sr	# Condicao de parada. Verificação do terminador
+	beq $t9, $t5, search_left_sr	# Se num[i] == 0, navegue ao filho esquerdo
 	
 	
 	lw $t7, 4($t4)			# Carregue o conteudo de node_right
@@ -572,6 +572,7 @@ print_root:				# imprimir "raiz" no caminho
 	li $v0, 4			
 	la $a0, raiz_str
 	syscall	
+			
 	
 	addi $t9, $t9, 1
 	
@@ -831,6 +832,10 @@ print_root_node:
 	la $a0, raiz_str
 	syscall
 
+	li $v0, 4			
+	la $a0, comma_str
+	syscall	
+
 
 	j print_NT	
 	
@@ -891,5 +896,3 @@ quit:
 	  syscall
 	
 	    	
-	
-
